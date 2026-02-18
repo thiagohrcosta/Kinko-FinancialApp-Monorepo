@@ -1,4 +1,5 @@
 # SHINO — Ledger-Driven Fintech (Stripe-Powered Digital Banking Simulation)
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/9407aaa3-1eaa-4d19-8cd7-0613b86a3319" />
 
 ## Project Overview
 
