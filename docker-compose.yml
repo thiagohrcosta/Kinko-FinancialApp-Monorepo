@@ -6,6 +6,7 @@ services:
     volumes:
       - ./backend:/app
       - storage_data:/app/storage
+      - bundle_cache:/usr/local/bundle
     ports:
       - "3000:3000"
     env_file:
@@ -49,3 +50,4 @@ services:
 volumes:
   postgres_data:
   storage_data:
+  bundle_cache:
