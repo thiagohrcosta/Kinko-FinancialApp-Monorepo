@@ -36,6 +36,18 @@ module Kinko
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
 
+    # Use RSpec and FactoryBot generators by default.
+    config.generators do |generate|
+      generate.test_framework :rspec,
+                              fixtures: true,
+                              view_specs: false,
+                              helper_specs: false,
+                              routing_specs: false,
+                              request_specs: true,
+                              controller_specs: false
+      generate.fixture_replacement :factory_bot, dir: "spec/factories"
+    end
+
     # Only loads a smaller set of middleware suitable for API only apps.
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
