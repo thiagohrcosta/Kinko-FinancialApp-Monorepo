@@ -1,0 +1,51 @@
+services:
+  backend:
+    build: ./backend
+    container_name: kinko_backend
+    command: bash -c "rm -f tmp/pids/server.pid && rails s -b 0.0.0.0"
+    volumes:
+      - ./backend:/app
+      - storage_data:/app/storage
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - db
+
+  # web:
+  #   build: ./web
+  #   container_name: kinko_web
+  #   command: yarn dev
+  #   volumes:
+  #     - ./web:/app
+  #   ports:
+  #     - "3001:3001"
+  #   environment:
+  #     PORT: 3001
+  #     WATCHPACK_POLLING: "true"
+  #     NEXT_PUBLIC_API_BASE_URL: "http://localhost:3000"
+  #     API_BASE_URL: "http://backend:3000"
+  #     STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+  #     STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+  #     STRIPE_PRICE_ID: ${STRIPE_PRICE_ID}
+  #     STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+  #     FRONTEND_URL: http://localhost:3001
+  #   depends_on:
+  #     - backend
+
+  db:
+    image: postgres:16
+    container_name: kinko_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: kinko_development
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
+  storage_data:
