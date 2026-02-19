@@ -28,6 +28,9 @@ module Kinko
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
+    # Autoload domain classes
+    config.autoload_paths << Rails.root.join('app', 'domain')
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

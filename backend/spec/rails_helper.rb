@@ -4,6 +4,9 @@ require_relative "../config/environment"
 abort("The Rails environment is running in production mode!") if Rails.env.production?
 require "rspec/rails"
 
+# Require domain classes
+Dir[Rails.root.join('app/domain/**/*.rb')].each { |f| require f }
+
 begin
   ActiveRecord::Migration.maintain_test_schema!
 rescue ActiveRecord::PendingMigrationError => error
