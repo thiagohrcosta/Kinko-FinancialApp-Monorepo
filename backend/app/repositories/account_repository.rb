@@ -1,6 +1,6 @@
 class AccountRepository
   def self.load(account_id)
-    record = Account.find(account_id)
+    record = Account.find_by!(uuid: account_id)
 
     entries = record.ledger_entries.order(:id).map do |entry|
       Accounts::LedgerEntry.new(
@@ -10,11 +10,11 @@ class AccountRepository
       )
     end
 
-    Accounts::Account.new(record.id, entries)
+    Accounts::Account.new(record.uuid, entries)
   end
 
   def self.save(domain_account)
-    record = Account.find(domain_account.uuid)
+    record = Account.find_by!(uuid: domain_account.uuid)
 
     ActiveRecord::Base.transaction do
       record.ledger_entries.destroy_all
