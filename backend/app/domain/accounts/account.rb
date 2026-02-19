@@ -18,14 +18,14 @@ module Accounts
     def credit!(money)
       validate_amount!(money)
 
-      register_entry(money.amount_cents)
+      register_entry(money, 1)
     end
 
     def debit!(money)
       validate_amount!(money)
       raise InsufficientFunds if insufficient?(money)
 
-      register_entry(-money.amount_cents)
+      register_entry(money, -1)
     end
 
     def entries
@@ -50,8 +50,11 @@ module Accounts
       balance < money.amount_cents
     end
 
-    def register_entry(amount_cents)
-      @new_entries << LedgerEntry.new(amount_cents)
+    def register_entry(money, multiplier)
+      @new_entries << LedgerEntry.new(
+        amount_cents: multiplier * money.amount_cents,
+        currency: money.currency
+      )
     end
   end
 end

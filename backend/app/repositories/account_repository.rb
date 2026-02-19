@@ -3,13 +3,17 @@ class AccountRepository
     record = Account.find(account_id)
 
     entries = record.ledger_entries.order(:id).map do |entry|
-      Accounts::LedgerEntry.new(entry.amount_cents)
+      Accounts::LedgerEntry.new(
+        amount_cents: entry.amount_cents,
+        currency: entry.currency,
+        reference: entry.reference
+      )
     end
 
     Accounts::Account.new(record.id, entries)
   end
 
-def self.save(domain_account)
+  def self.save(domain_account)
     record = Account.find(domain_account.uuid)
 
     ActiveRecord::Base.transaction do
