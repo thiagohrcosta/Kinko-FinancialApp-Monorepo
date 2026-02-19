@@ -1,3 +1,4 @@
+# app/concerns/authenticatable.rb
 module Authenticatable
   extend ActiveSupport::Concern
 
@@ -8,8 +9,10 @@ module Authenticatable
   private
 
   def authenticate_user!
-    token = request.headers['Authorization']&.split(' ')&.last
-    raise ExceptionHandler::MissingToken, 'Token ausente' if token.nil?
+    header = request.headers['Authorization'].to_s
+    token = header.split(' ').last
+    token = nil if header.match?(/\ABearer\s*\z/i)
+    raise ExceptionHandler::MissingToken, 'Token ausente' if token.blank?
 
     @decoded = JsonWebToken.decode(token)
     @current_user = User.find(@decoded[:user_id])
