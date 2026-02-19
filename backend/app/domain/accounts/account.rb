@@ -3,38 +3,55 @@ require_relative 'errors'
 
 module Accounts
   class Account
-    attr_reader :uuid, :entries
+    attr_reader :uuid
 
-    def initialize(uuid, entries = [])
+    def initialize(uuid, persisted_entries = [])
       @uuid = uuid
-      @entries = entries
+      @persisted_entries = persisted_entries
+      @new_entries = []
     end
 
     def balance
-      entries.sum(&:amount_cents)
+      all_entries.sum(&:amount_cents)
     end
 
     def credit!(money)
-      raise InvalidAmount unless money.positive?
+      validate_amount!(money)
 
-      add_entry(money.amount_cents)
+      register_entry(money.amount_cents)
     end
 
     def debit!(money)
-      raise InvalidAmount unless money.positive?
+      validate_amount!(money)
       raise InsufficientFunds if insufficient?(money)
 
-      add_entry(-money.amount_cents)
+      register_entry(-money.amount_cents)
+    end
+
+    def entries
+      all_entries.dup.freeze
+    end
+
+    def new_entries
+      @new_entries.dup.freeze
     end
 
     private
+
+    def all_entries
+      @persisted_entries + @new_entries
+    end
+
+    def validate_amount!(money)
+      raise InvalidAmount unless money.positive?
+    end
 
     def insufficient?(money)
       balance < money.amount_cents
     end
 
-    def add_entry(amount_cents)
-      entries << LedgerEntry.new(amount_cents)
+    def register_entry(amount_cents)
+      @new_entries << LedgerEntry.new(amount_cents)
     end
   end
 end
