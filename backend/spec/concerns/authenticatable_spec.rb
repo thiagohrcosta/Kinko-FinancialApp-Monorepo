@@ -1,9 +1,8 @@
 require "rails_helper"
 
 RSpec.describe Authenticatable, type: :controller do
-  # Controller de teste que usa o concern
   controller(ApplicationController) do
-    include ExceptionHandler  # Precisa incluir isso!
+    include ExceptionHandler
     include Authenticatable
 
     def index
@@ -11,7 +10,6 @@ RSpec.describe Authenticatable, type: :controller do
     end
 
     def show_user
-      # Endpoint público para testar current_user
       render json: { current_user_id: current_user&.id }
     end
   end
@@ -78,8 +76,6 @@ RSpec.describe Authenticatable, type: :controller do
       it "handles JWT::DecodeError when missing Bearer prefix" do
         request.headers["Authorization"] = "InvalidFormat"
 
-        # JsonWebToken.decode vai lançar JWT::DecodeError
-        # que precisa ser tratado
         expect {
           get :index
         }.to raise_error(JWT::DecodeError)
@@ -88,7 +84,6 @@ RSpec.describe Authenticatable, type: :controller do
       it "handles JWT::DecodeError when only Bearer is present" do
         request.headers["Authorization"] = "Bearer "
 
-        # Vai dar MissingToken porque .split(' ').last é nil
         get :index
         expect(response).to have_http_status(:unauthorized)
         json = JSON.parse(response.body)
@@ -98,7 +93,6 @@ RSpec.describe Authenticatable, type: :controller do
       it "handles JWT::DecodeError when token is malformed" do
         request.headers["Authorization"] = "Bearer malformed_token"
 
-        # JsonWebToken.decode vai lançar JWT::DecodeError
         expect {
           get :index
         }.to raise_error(JWT::DecodeError)
@@ -135,7 +129,6 @@ RSpec.describe Authenticatable, type: :controller do
         get :index
 
         json = JSON.parse(response.body)
-        # Ajuste baseado na mensagem real do seu app
         expect(json["error"]).to be_present
         expect(json["error"]).to match(/not found|não encontrado/i)
       end
@@ -197,12 +190,9 @@ RSpec.describe Authenticatable, type: :controller do
     end
 
     it "handles multiple spaces correctly" do
-      # Testa se .split(' ').last funciona corretamente
       request.headers["Authorization"] = "Bearer  #{valid_token}"
       get :index
 
-      # Pode falhar ou passar dependendo da implementação
-      # O importante é testar o comportamento
       expect(response.status).to be_in([200, 401])
     end
   end
