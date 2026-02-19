@@ -9,17 +9,19 @@ class AccountRepository
     Accounts::Account.new(record.id, entries)
   end
 
-  def self.save(domain_account)
+def self.save(domain_account)
     record = Account.find(domain_account.uuid)
 
-    record.ledger_entries.destroy_all
+    ActiveRecord::Base.transaction do
+      record.ledger_entries.destroy_all
 
-    domain_account.entries.each do |entry|
-      record.ledger_entries.create!(
-        amount_cents: entry.amount_cents,
-        currency: "USD",
-        entry_type: entry.amount_cents >= 0 ? "credit" : "debit"
-      )
+      domain_account.entries.each do |entry|
+        record.ledger_entries.create!(
+          amount_cents: entry.amount_cents,
+          currency: "USD",
+          entry_type: entry.amount_cents >= 0 ? "credit" : "debit"
+        )
+      end
     end
   end
 end
