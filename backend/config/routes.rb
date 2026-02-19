@@ -13,6 +13,8 @@ Rails.application.routes.draw do
     namespace :v1 do
       post 'auth/register', to: 'auth#register'
       post 'auth/login',    to: 'auth#login'
+
+      resources :accounts, only: [:index, :show, :create]
     end
   end
 end
