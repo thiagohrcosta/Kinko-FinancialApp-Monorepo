@@ -15,7 +15,11 @@ class AccountRepository
     record.ledger_entries.destroy_all
 
     domain_account.entries.each do |entry|
-      record.ledger_entries.create!(amount_cents: entry.amount_cents, currency: 'USD', entry_type: entry.amount_cents >= 0 ? 'credit' : 'debit')
+      record.ledger_entries.create!(
+        amount_cents: entry.amount_cents,
+        currency: "USD",
+        entry_type: entry.amount_cents >= 0 ? "credit" : "debit"
+      )
     end
   end
 end
