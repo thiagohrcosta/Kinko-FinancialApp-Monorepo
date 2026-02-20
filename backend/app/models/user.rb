@@ -17,9 +17,16 @@ class User < ApplicationRecord
   validates :address_neighborhood, presence: true
   validates :address_zip_code, presence: true
 
+  after_create :create_default_account
+
   private
 
   def password_required?
     new_record? || password.present? || password_confirmation.present?
   end
+
+  def create_default_account
+    Accounts::CreateAccount.new.call(user: self)
+  end
+
 end

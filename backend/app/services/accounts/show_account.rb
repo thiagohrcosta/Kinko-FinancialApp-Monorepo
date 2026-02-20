@@ -1,5 +1,5 @@
 module Accounts
-  class ListAccount
+  class ShowAccount
     def call(user:, account_id:)
       account = user.accounts.find_by!(uuid: account_id)
       domain_account = AccountRepository.load(account.uuid)

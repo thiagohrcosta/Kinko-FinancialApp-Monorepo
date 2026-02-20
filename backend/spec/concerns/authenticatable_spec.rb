@@ -57,7 +57,7 @@ RSpec.describe Authenticatable, type: :controller do
         get :index
 
         json = JSON.parse(response.body)
-        expect(json["error"]).to eq("Missing Token")
+        expect(json["error"]).to eq("Unauthorized")
       end
     end
 
@@ -68,7 +68,7 @@ RSpec.describe Authenticatable, type: :controller do
 
         expect(response).to have_http_status(:unauthorized)
         json = JSON.parse(response.body)
-        expect(json["error"]).to eq("Missing Token")
+        expect(json["error"]).to eq("Unauthorized")
       end
     end
 
@@ -87,7 +87,7 @@ RSpec.describe Authenticatable, type: :controller do
         get :index
         expect(response).to have_http_status(:unauthorized)
         json = JSON.parse(response.body)
-        expect(json["error"]).to eq("Missing Token")
+        expect(json["error"]).to eq("Unauthorized")
       end
 
       it "handles JWT::DecodeError when token is malformed" do

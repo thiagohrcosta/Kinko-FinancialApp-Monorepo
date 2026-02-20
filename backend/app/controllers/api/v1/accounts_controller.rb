@@ -13,7 +13,7 @@ module Api
 
       # GET /api/v1/accounts/{uuid}
       def show
-        service = Accounts::ListAccount.new
+        service = Accounts::ShowAccount.new
         account = service.call(user: current_user, account_id: params[:id])
 
         render json: account
