@@ -1,5 +1,5 @@
 # KINKO — Ledger-Driven Fintech (Stripe-Powered Digital Banking Simulation)
-<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/9407aaa3-1eaa-4d19-8cd7-0613b86a3319" />
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/3558d184-3c8e-43a0-a7b6-6fb9ae41690e" />
 
 ## Project Overview
 
