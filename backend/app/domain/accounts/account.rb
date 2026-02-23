@@ -15,17 +15,17 @@ module Accounts
       all_entries.sum(&:amount_cents)
     end
 
-    def credit!(money)
+    def credit!(money, transaction_id: nil)
       validate_amount!(money)
 
-      register_entry(money, 1)
+      register_entry(money, 1, transaction_id)
     end
 
-    def debit!(money)
+    def debit!(money, transaction_id: nil)
       validate_amount!(money)
       raise InsufficientFunds if insufficient?(money)
 
-      register_entry(money, -1)
+      register_entry(money, -1, transaction_id)
     end
 
     def entries
@@ -50,10 +50,11 @@ module Accounts
       balance < money.amount_cents
     end
 
-    def register_entry(money, multiplier)
+    def register_entry(money, multiplier, transaction_id = nil)
       @new_entries << LedgerEntry.new(
         amount_cents: multiplier * money.amount_cents,
-        currency: money.currency
+        currency: money.currency,
+        reference: transaction_id
       )
     end
   end

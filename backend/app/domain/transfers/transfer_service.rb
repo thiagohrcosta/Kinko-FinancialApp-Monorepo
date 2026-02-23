@@ -2,7 +2,6 @@ module Transfers
   class TransferService
     def initialize(account_repository:)
       @account_repository = account_repository
-      puts "TransferService initialized with account_repository: #{@account_repository.class.name}"
     end
 
     def call(from_uuid:, to_uuid:, money:)
@@ -11,10 +10,13 @@ module Transfers
       from_account = @account_repository.load(from_uuid)
       to_account   = @account_repository.load(to_uuid)
 
-      from_account.debit!(money)
-      to_account.credit!(money)
+      transaction_id = SecureRandom.uuid
+
+      from_account.debit!(money, transaction_id: transaction_id)
+      to_account.credit!(money, transaction_id: transaction_id)
 
       persist!(from_account, to_account)
+      transaction_id
     end
 
     private

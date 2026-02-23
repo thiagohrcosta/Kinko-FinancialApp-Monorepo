@@ -11,13 +11,16 @@ module Api
         money = Accounts::Money.new(amount_cents)
         service = Transfers::TransferService.new(account_repository: AccountRepository)
 
-        service.call(
+        transaction_id = service.call(
           from_uuid: from_uuid,
           to_uuid: to_uuid,
           money: money
         )
 
-        render json: { message: 'Transfer completed successfully' }, status: :ok
+        render json: {
+          message: 'Transfer completed successfully',
+          transaction_id: transaction_id
+        }, status: :ok
       rescue ArgumentError
         render json: { error: 'Cannot transfer to the same account' }, status: :unprocessable_entity
       rescue Accounts::InsufficientFunds

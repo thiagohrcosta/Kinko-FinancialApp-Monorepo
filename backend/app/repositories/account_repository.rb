@@ -17,13 +17,12 @@ class AccountRepository
     record = Account.find_by!(uuid: domain_account.uuid)
 
     ActiveRecord::Base.transaction do
-      record.ledger_entries.destroy_all
-
-      domain_account.entries.each do |entry|
+      domain_account.new_entries.each do |entry|
         record.ledger_entries.create!(
           amount_cents: entry.amount_cents,
-          currency: "USD",
-          entry_type: entry.amount_cents >= 0 ? "credit" : "debit"
+          currency: entry.currency,
+          entry_type: entry.amount_cents >= 0 ? "credit" : "debit",
+          transaction_id: entry.reference
         )
       end
     end
