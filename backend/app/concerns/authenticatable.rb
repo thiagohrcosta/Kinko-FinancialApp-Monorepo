@@ -12,7 +12,7 @@ module Authenticatable
     header = request.headers['Authorization'].to_s
     token = header.split(' ').last
     token = nil if header.match?(/\ABearer\s*\z/i)
-    raise ExceptionHandler::MissingToken, 'Missing Token' if token.blank?
+    raise ExceptionHandler::MissingToken, 'Unauthorized' if token.blank?
 
     @decoded = JsonWebToken.decode(token)
     @current_user = User.find(@decoded[:user_id])

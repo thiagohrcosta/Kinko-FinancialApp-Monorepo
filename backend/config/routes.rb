@@ -15,6 +15,13 @@ Rails.application.routes.draw do
       post 'auth/login',    to: 'auth#login'
 
       resources :accounts, only: [:index, :show, :create]
+
+      resources :deposits, only: [:create]
+      resources :transfers, only: [:create]
+
+      namespace :webhooks do
+        post 'stripe', to: 'stripe#create'
+      end
     end
   end
 end
