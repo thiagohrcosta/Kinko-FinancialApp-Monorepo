@@ -2,6 +2,7 @@ module Transfers
   class TransferService
     def initialize(account_repository:)
       @account_repository = account_repository
+      puts "TransferService initialized with account_repository: #{@account_repository.class.name}"
     end
 
     def call(from_uuid:, to_uuid:, money:)

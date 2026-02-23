@@ -17,6 +17,7 @@ Rails.application.routes.draw do
       resources :accounts, only: [:index, :show, :create]
 
       resources :deposits, only: [:create]
+      resources :transfers, only: [:create]
 
       namespace :webhooks do
         post 'stripe', to: 'stripe#create'

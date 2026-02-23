@@ -12,8 +12,8 @@ module Payments
 
       money = Accounts::Money.new(amount_cents, "USD")
 
+      system_account.credit!(money)
       user_account.credit!(money)
-      system_account.debit!(money)
 
       ActiveRecord::Base.transaction do
         @account_repository.save(user_account)
