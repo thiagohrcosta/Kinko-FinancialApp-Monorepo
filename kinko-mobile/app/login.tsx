@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   header: {
     width: "100%",
     paddingHorizontal: 6,
-    marginBottom: 200
+    marginBottom: 300
   },
   welcomeText: {
     fontSize: 42,
