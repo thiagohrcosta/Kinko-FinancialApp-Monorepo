@@ -43,3 +43,5 @@
 /backend/public/uploads/*
 /backend/db/*.sqlite3
 /backend/coverage
+
+/kinko-mobile/node_modules
