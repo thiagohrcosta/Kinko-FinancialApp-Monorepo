@@ -25,9 +25,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_23_120000) do
 
   create_table "ledger_entries", force: :cascade do |t|
     t.bigint "account_id", null: false
-    t.bigint "amount_cents"
-    t.string "currency"
-    t.string "entry_type"
+    t.bigint "amount_cents", null: false
+    t.string "currency", null: false
+    t.string "entry_type", null: false
     t.string "reference"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

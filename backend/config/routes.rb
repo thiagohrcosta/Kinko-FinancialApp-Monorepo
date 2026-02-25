@@ -14,7 +14,15 @@ Rails.application.routes.draw do
       post 'auth/register', to: 'auth#register'
       post 'auth/login',    to: 'auth#login'
 
-      resources :accounts, only: [:index, :show, :create]
+      resources :accounts, only: [:index, :show, :create] do
+        collection do
+          get :balance
+        end
+
+        member do
+          get :balance
+        end
+      end
 
       resources :deposits, only: [:create]
       resources :transfers, only: [:create]
