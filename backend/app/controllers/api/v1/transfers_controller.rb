@@ -7,6 +7,7 @@ module Api
         from_uuid = current_user.accounts.first.uuid
         to_uuid = params.require(:destination_account_uuid)
         amount_cents = params.require(:amount_cents).to_i
+        description = params[:description] || "Transfer"
 
         money = Accounts::Money.new(amount_cents)
         service = Transfers::TransferService.new(account_repository: AccountRepository)
@@ -14,7 +15,8 @@ module Api
         transaction_id = service.call(
           from_uuid: from_uuid,
           to_uuid: to_uuid,
-          money: money
+          money: money,
+          description: description
         )
 
         render json: {

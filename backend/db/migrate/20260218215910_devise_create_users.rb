@@ -13,7 +13,7 @@ class DeviseCreateUsers < ActiveRecord::Migration[7.2]
       t.string :address_street, null: false
       t.string :address_number, null: false
       t.string :address_complement
-      t.string :address_neighborhood, null: false
+      t.string :address_neighborhood
       t.string :address_city, null: false
       t.string :address_state, null: false
       t.string :address_zip_code, null: false

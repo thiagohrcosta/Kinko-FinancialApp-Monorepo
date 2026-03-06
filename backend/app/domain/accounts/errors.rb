@@ -15,4 +15,5 @@ module Accounts
 
   class AccountNotFound < DomainError; end
   class InvalidAccount < DomainError; end
+  class InvalidEntryType < StandardError; end
 end

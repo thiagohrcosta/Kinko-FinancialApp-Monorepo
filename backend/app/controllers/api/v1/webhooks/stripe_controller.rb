@@ -50,16 +50,21 @@ class Api::V1::Webhooks::StripeController < ApplicationController
   private
 
   def handle_success(payment_intent)
-    # Suporta tanto objetos Stripe quanto Hashes do JSON parseado
+    Rails.logger.info("=== PAYMENT INTENT DEBUG ===")
+    Rails.logger.info("Payment Intent: #{payment_intent.inspect}")
+
     metadata = payment_intent.is_a?(Hash) ? payment_intent["metadata"] : payment_intent.metadata
     amount_cents = payment_intent.is_a?(Hash) ? payment_intent["amount"] : payment_intent.amount
-
-    # Acessa account_uuid - [] funciona em Hash e Stripe::StripeObject
     account_uuid = metadata["account_uuid"] if metadata
 
-    Rails.logger.info("Processing payment_intent.succeeded: uuid=#{account_uuid}, amount=#{amount_cents}")
+    Rails.logger.info("Metadata: #{metadata.inspect}")
+    Rails.logger.info("Account UUID: #{account_uuid}")
+    Rails.logger.info("Amount: #{amount_cents}")
 
-    return if account_uuid.blank?
+    if account_uuid.blank?
+      Rails.logger.warn("Missing account_uuid in metadata")
+      return
+    end
 
     service = Payments::DepositService.new(
       account_repository: AccountRepository
@@ -69,6 +74,12 @@ class Api::V1::Webhooks::StripeController < ApplicationController
       account_uuid: account_uuid,
       amount_cents: amount_cents
     )
+  rescue ActiveRecord::RecordNotFound => e
+    Rails.logger.error("Account not found: #{account_uuid}")
+  rescue StandardError => e
+    Rails.logger.error("Error in handle_success: #{e.class} - #{e.message}")
+    Rails.logger.error(e.backtrace.first(10).join("\n"))
+    raise # Re-raise para ver no log
   end
 
   def handle_charge_success(charge)

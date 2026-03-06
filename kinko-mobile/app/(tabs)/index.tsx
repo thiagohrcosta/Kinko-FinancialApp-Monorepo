@@ -1,98 +1,138 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import Header from '../components/header';
+import BalanceCard from '../components/cards/balance-card';
+import HomeGraphicChart from '../components/dashboards/home-graphic-chart';
+import InsightCard from '../components/cards/insight-card';
+import { useCallback, useEffect, useState } from 'react';
+import getUserBalance from '@/services/get-user-balance';
+import { useAuth } from '@/context/auth-context';
+import { useBalanceWebSocket } from '@/hooks/use-balance-websocket';
+import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const router = useRouter();
+  const { token, user } = useAuth();
+  const [balance, setBalanceState] = useState<{
+    income: number
+    expenses: number
+  } | null>(null)
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const [loading, setLoading] = useState(true)
+
+  const fetchBalance = useCallback(async () => {
+    try {
+      const response = await getUserBalance()
+
+      setBalanceState({
+        income: response.income,
+        expenses: response.expenses
+      })
+    } catch (error) {
+      console.log("Erro ao buscar balance", error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const handleBalanceUpdate = useCallback((notification: {
+    type: string;
+    account_uuid: string;
+    amount_cents: number;
+    timestamp: string;
+  }) => {
+    if (notification.type === 'balance_updated') {
+      console.log('Balance updated via WebSocket, refetching...');
+      fetchBalance();
+    }
+  }, [fetchBalance]);
+
+  useBalanceWebSocket(token, handleBalanceUpdate);
+
+  useEffect(() => {
+    fetchBalance()
+  }, [fetchBalance])
+
+  return (
+    <View style={{ flex: 1 }}>
+      <Header />
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.welcomeContainer}>
+          <Text style={styles.welcomeText}>Welcome back {user?.full_name || 'User'}</Text>
+        </View>
+        {balance && (
+          <View style={styles.balanceContainer}>
+            <BalanceCard
+              kind="Income"
+              balance={balance?.income}
+              loading={loading}
+            />
+            <BalanceCard
+              kind="Expenses"
+              balance={balance?.expenses}
+              loading={loading}
+            />
+          </View>
+        )}
+        <HomeGraphicChart />
+        <InsightCard />
+
+        {/* View Statement Button */}
+        <TouchableOpacity
+          style={styles.statementButton}
+          onPress={() => router.push('/(tabs)/transactions')}
+        >
+          <MaterialIcons name="receipt-long" size={20} color="#fff" />
+          <Text style={styles.statementButtonText}>View Financial Statement</Text>
+          <MaterialIcons name="chevron-right" size={20} color="#fff" />
+        </TouchableOpacity>
+
+        <View style={styles.bottomPadding} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    marginTop: 20,
+    flex: 1,
+    paddingBottom: 20,
+  },
+  welcomeContainer: {
+    alignItems: 'flex-start',
+    paddingHorizontal: 20,
+  },
+  welcomeText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  balanceContainer: {
+    marginTop: 20,
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+  },
+  statementButton: {
+    marginHorizontal: 20,
+    marginTop: 24,
+    flexDirection: 'row',
+    backgroundColor: '#d01c1c',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  statementButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  bottomPadding: {
+    height: 20,
   },
-});
+})
