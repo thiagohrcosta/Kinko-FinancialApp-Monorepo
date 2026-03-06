@@ -31,8 +31,14 @@ export const authService = {
 
       const { token, user } = response.data;
 
+      console.log("DEBUG: Login successful");
+      console.log("DEBUG: Token received:", token);
+      console.log("DEBUG: User received:", user);
+
       await AsyncStorage.setItem(TOKEN_KEY, token);
       await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+
+      console.log("DEBUG: Token stored in AsyncStorage");
 
       return { token, user };
     } catch (error) {

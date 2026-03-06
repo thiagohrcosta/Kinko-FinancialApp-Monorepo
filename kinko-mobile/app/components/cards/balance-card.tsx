@@ -19,7 +19,7 @@ export default function BalanceCard({
     <View style={styles.container}>
       <View style={styles.iconContainer}>
         <MaterialIcons
-          name={isIncome ? "arrow-upward" : "arrow-downward"}
+          name={isIncome ? "arrow-downward" : "arrow-upward"}
           size={24}
           color={isIncome ? "#16a34a" : "#dc2626"}
         />

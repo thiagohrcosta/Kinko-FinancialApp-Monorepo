@@ -17,6 +17,7 @@ Rails.application.routes.draw do
       resources :accounts, only: [:index, :show, :create] do
         collection do
           get :balance
+          get :transactions
         end
 
         member do

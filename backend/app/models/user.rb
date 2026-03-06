@@ -6,15 +6,19 @@ class User < ApplicationRecord
 
   has_many :accounts, dependent: :destroy
 
+  USER_TYPES = %w[individual business].freeze
+
   validates :email, presence: true, uniqueness: true
   validates :password, presence: true, length: { minimum: 6 }, if: :password_required?
 
   validates :full_name, presence: true
+  validates :user_type, presence: true, inclusion: { in: USER_TYPES }
+  validates :business_name, presence: true, if: :business?
+  validates :business_sector, presence: true, if: :business?
   validates :address_street, presence: true
   validates :address_number, presence: true
   validates :address_city, presence: true
   validates :address_state, presence: true
-  validates :address_neighborhood, presence: true
   validates :address_zip_code, presence: true
 
   after_create :create_default_account
@@ -27,6 +31,10 @@ class User < ApplicationRecord
 
   def create_default_account
     Accounts::CreateAccount.new.call(user: self)
+  end
+
+  def business?
+    user_type == 'business'
   end
 
 end

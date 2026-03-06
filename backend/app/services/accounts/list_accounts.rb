@@ -1,6 +1,7 @@
 module Accounts
   class ListAccounts
     def call(user:)
+      user = User.find(user.id) # Ensure we have the latest data from the database
       user.accounts.map do |account_record|
         domain_account = AccountRepository.load(account_record.uuid)
 

@@ -6,6 +6,7 @@ class AccountRepository
       Accounts::LedgerEntry.new(
         amount_cents: entry.amount_cents,
         currency: entry.currency,
+        entry_type: entry.entry_type.to_sym,
         reference: entry.reference
       )
     end
@@ -21,8 +22,8 @@ class AccountRepository
         record.ledger_entries.create!(
           amount_cents: entry.amount_cents,
           currency: entry.currency,
-          entry_type: entry.amount_cents >= 0 ? "credit" : "debit",
-          transaction_id: entry.reference
+          entry_type: entry.entry_type.to_s,  # ✅ Converter symbol para string
+          reference: entry.reference
         )
       end
     end
