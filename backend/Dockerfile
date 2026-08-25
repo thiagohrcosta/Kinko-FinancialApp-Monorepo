@@ -1,4 +1,4 @@
-FROM ruby:3.3
+FROM ruby:3.3.12
 
 # Dependências do sistema
 RUN apt-get update -qq && apt-get install -y \

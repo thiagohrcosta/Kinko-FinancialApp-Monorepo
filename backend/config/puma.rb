@@ -32,3 +32,10 @@ plugin :tmp_restart
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
 # In other environments, only set the PID file if requested.
 pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
+
+# Run the Solid Queue supervisor inside the Puma process so background jobs
+# are dispatched/worked without needing a separate `bin/jobs` process. There's
+# only a single app container in this project's deploy, so this keeps things
+# simple. Set SOLID_QUEUE_IN_PUMA=false to opt out (e.g. if you introduce a
+# dedicated worker process/container later).
+plugin :solid_queue unless ENV["SOLID_QUEUE_IN_PUMA"] == "false"
