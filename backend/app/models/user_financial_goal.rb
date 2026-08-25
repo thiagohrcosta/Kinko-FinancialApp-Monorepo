@@ -1,0 +1,2 @@
+class UserFinancialGoal < ApplicationRecord
+end
