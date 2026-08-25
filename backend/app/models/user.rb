@@ -5,6 +5,9 @@ class User < ApplicationRecord
          :recoverable, :rememberable, :validatable
 
   has_many :accounts, dependent: :destroy
+  has_many :user_financial_goals, dependent: :destroy
+  has_many :financial_goals, through: :user_financial_goals
+
 
   USER_TYPES = %w[individual business].freeze
 

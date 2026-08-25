@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_24_120002) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_25_042816) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -23,17 +23,49 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_120002) do
     t.index ["user_id"], name: "index_accounts_on_user_id"
   end
 
+  create_table "financial_goals", force: :cascade do |t|
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "icon"
+    t.string "key", null: false
+    t.string "name_en", null: false
+    t.string "name_pt", null: false
+    t.integer "position", default: 0
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_financial_goals_on_key", unique: true
+  end
+
   create_table "ledger_entries", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.bigint "amount_cents", null: false
+    t.float "categorization_confidence"
+    t.string "categorized_by"
     t.datetime "created_at", null: false
     t.string "currency", null: false
     t.string "entry_type", null: false
+    t.string "merchant_normalized"
+    t.string "raw_description"
     t.string "reference"
+    t.bigint "spending_category_id"
     t.string "transaction_id"
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_ledger_entries_on_account_id"
+    t.index ["spending_category_id"], name: "index_ledger_entries_on_spending_category_id"
     t.index ["transaction_id"], name: "index_ledger_entries_on_transaction_id"
+  end
+
+  create_table "recurring_changes", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.boolean "active", default: true
+    t.bigint "average_amount_cents"
+    t.datetime "created_at", null: false
+    t.date "first_detected_at"
+    t.string "frequency"
+    t.date "last_seen_at"
+    t.string "merchant_normalized", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_recurring_changes_on_account_id"
   end
 
   create_table "solid_cable_messages", force: :cascade do |t|
@@ -207,6 +239,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_120002) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  create_table "spending_categories", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "icon"
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "user_financial_goals", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "financial_goal_id", null: false
+    t.integer "priority", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["financial_goal_id"], name: "index_user_financial_goals_on_financial_goal_id"
+    t.index ["user_id", "financial_goal_id"], name: "index_user_financial_goals_on_user_id_and_financial_goal_id", unique: true
+    t.index ["user_id"], name: "index_user_financial_goals_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "address_city", null: false
     t.string "address_complement"
@@ -244,6 +294,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_120002) do
 
   add_foreign_key "accounts", "users"
   add_foreign_key "ledger_entries", "accounts"
+  add_foreign_key "ledger_entries", "spending_categories"
+  add_foreign_key "recurring_changes", "accounts"
   add_foreign_key "solid_queue_batch_executions", "solid_queue_batches", column: "batch_id", on_delete: :cascade
   add_foreign_key "solid_queue_batch_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
@@ -252,4 +304,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_120002) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "user_financial_goals", "financial_goals"
+  add_foreign_key "user_financial_goals", "users"
 end
