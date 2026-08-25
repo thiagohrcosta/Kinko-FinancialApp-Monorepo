@@ -1,7 +1,10 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { useRouter } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function InsightCard() {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
@@ -11,7 +14,10 @@ export default function InsightCard() {
       <Text style={{ marginTop: 8 }}>
         Get personalized insights based on your spending habits and financial goals. We analyze your transactions to provide you with actionable advice and tips to help you save money and make informed financial decisions.
       </Text>
-      <Pressable style={styles.insightButton}>
+      <Pressable
+        style={styles.insightButton}
+        onPress={() => router.push('/(tabs)/insights')}
+      >
         <Text style={styles.insightButtonText}>View Insights</Text>
       </Pressable>
     </View>
