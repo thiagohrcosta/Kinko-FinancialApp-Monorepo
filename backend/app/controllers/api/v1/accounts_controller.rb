@@ -143,6 +143,35 @@ module Api
         render json: transactions
       end
 
+      # GET /api/v1/accounts/insights?range=7|14|30
+      def insights
+        account = current_user.accounts.first
+        unless account
+          render json: { error: 'No accounts found for user' }, status: :not_found
+          return
+        end
+
+        days = params[:range].to_i
+        days = 7 unless [7, 14, 30].include?(days)
+
+        period_end = Date.current
+        period_start = period_end - (days - 1).days
+
+        sums = account.ledger_entries
+          .where(created_at: period_start.beginning_of_day..period_end.end_of_day)
+          .group("DATE(created_at)", :entry_type)
+          .sum(:amount_cents)
+
+        dates = (period_start..period_end).to_a
+
+        render json: {
+          range: "#{days}D",
+          dates: dates.map(&:iso8601),
+          income: dates.map { |d| (sums[[d, "credit"]] || 0) / 100.0 },
+          expenses: dates.map { |d| (sums[[d, "debit"]] || 0) / 100.0 }
+        }
+      end
+
       private
 
       def is_uuid?(str)

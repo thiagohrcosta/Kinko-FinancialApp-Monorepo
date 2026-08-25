@@ -24,25 +24,26 @@ const USER_KEY = 'authUser';
 export const authService = {
   async login(email: string, password: string): Promise<LoginResponse> {
     try {
-      const response = await axios.post<LoginResponse>(`${API_BASE_URL}/api/v1/auth/login`, {
-        email,
-        password,
-      });
+      const response = await axios.post<LoginResponse>(
+        `${API_BASE_URL}/api/v1/auth/login`,
+        { email: email.trim().toLowerCase(), password },
+        { timeout: 10000 }
+      );
 
       const { token, user } = response.data;
-
-      console.log("DEBUG: Login successful");
-      console.log("DEBUG: Token received:", token);
-      console.log("DEBUG: User received:", user);
 
       await AsyncStorage.setItem(TOKEN_KEY, token);
       await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
 
-      console.log("DEBUG: Token stored in AsyncStorage");
-
       return { token, user };
     } catch (error) {
       if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          throw new Error('Login request timed out. Check your connection to the server.');
+        }
+        if (!error.response) {
+          throw new Error('Could not reach the server. Check your connection.');
+        }
         throw new Error(error.response?.data?.error || 'Login failed');
       }
       throw error;

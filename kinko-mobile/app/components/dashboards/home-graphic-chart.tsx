@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import React, { useState, useMemo, useEffect } from "react";
+import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, Pressable } from "react-native";
 import {
   Canvas,
   Path,
@@ -10,39 +10,59 @@ import {
 import * as d3 from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-
-const DATA = {
-  "7D": {
-    income: [300, 420, 350, 480, 390, 520, 460],
-    expenses: [250, 320, 290, 400, 350, 450, 420],
-  },
-  "14D": {
-    income: [200, 350, 280, 420, 300, 500, 380, 600, 450, 650, 480, 700, 550, 750],
-    expenses: [150, 250, 200, 350, 260, 420, 310, 500, 370, 520, 390, 560, 420, 600],
-  },
-  "30D": {
-    income: Array.from({ length: 30 }, () => Math.random() * 5000),
-    expenses: Array.from({ length: 30 }, () => Math.random() * 4000),
-  },
-};
+import { runOnJS } from "react-native-reanimated";
+import { getInsights, type InsightRange } from "@/services/get-insights";
 
 export default function InsightChart() {
-  const [range, setRange] = useState<"7D" | "14D" | "30D">("7D");
+  const [range, setRange] = useState<InsightRange>("7D");
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [dates, setDates] = useState<string[]>([]);
+  const [income, setIncome] = useState<number[]>([]);
+  const [expenses, setExpenses] = useState<number[]>([]);
 
-  const { income, expenses } = DATA[range];
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setActiveIndex(null);
+
+    getInsights(range)
+      .then((data) => {
+        if (cancelled) return;
+        setDates(data.dates);
+        setIncome(data.income);
+        setExpenses(data.expenses);
+      })
+      .catch((error) => {
+        console.log("Erro ao buscar insights", error);
+        if (cancelled) return;
+        setDates([]);
+        setIncome([]);
+        setExpenses([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [range]);
 
   const width = 340;
   const height = 200;
   const padding = 35;
 
+  const hasData = income.length > 1 && expenses.length > 1;
+
   const { yScale, ticks } = useMemo(() => {
     const allValues = [...income, ...expenses];
-    const rawMin = Math.min(...allValues);
-    const rawMax = Math.max(...allValues);
+    const rawMin = Math.min(0, ...allValues);
+    const rawMax = Math.max(1, ...allValues);
 
     const scale = scaleLinear().domain([rawMin, rawMax]).nice(5);
-    const [niceMin, niceMax] = scale.domain();
+    let [niceMin, niceMax] = scale.domain();
+    if (niceMin === niceMax) niceMax = niceMin + 1;
     const generatedTicks = scale.ticks(4);
 
     const yScale = (value: number) => {
@@ -65,7 +85,7 @@ export default function InsightChart() {
       .y((d) => yScale(d))
       .curve(d3.curveCatmullRom.alpha(0.5));
 
-    return Skia.Path.MakeFromSVGString(line(data) ?? "");
+    return Skia.Path.MakeFromSVGString(line(data) ?? "") ?? Skia.Path.Make();
   };
 
   const createArea = (data: number[]) => {
@@ -76,7 +96,7 @@ export default function InsightChart() {
       .y1((d) => yScale(d))
       .curve(d3.curveCatmullRom.alpha(0.5));
 
-    return Skia.Path.MakeFromSVGString(area(data) ?? "");
+    return Skia.Path.MakeFromSVGString(area(data) ?? "") ?? Skia.Path.Make();
   };
 
   const incomeLine = createLine(income);
@@ -84,19 +104,32 @@ export default function InsightChart() {
   const incomeArea = createArea(income);
   const expensesArea = createArea(expenses);
 
-  const gesture = Gesture.Pan()
-    .onUpdate((e) => {
-      const relativeX = e.x - padding;
-      const step = (width - padding * 2) / (income.length - 1);
-      const index = Math.round(relativeX / step);
+  // Tap: select a point and keep it selected after lifting the finger.
+  // Pan: dragging across the chart moves the selection live.
+  // Neither clears on release — the tooltip stays until the user taps
+  // outside the chart (see the Pressable wrapping the card below) or
+  // switches the date range.
+  const tapGesture = Gesture.Tap().onEnd((e) => {
+    const relativeX = e.x - padding;
+    const step = (width - padding * 2) / (income.length - 1);
+    const index = Math.round(relativeX / step);
 
-      if (index >= 0 && index < income.length) {
-        setActiveIndex(index);
-      }
-    })
-    .onEnd(() => {
-      setActiveIndex(null);
-    });
+    if (index >= 0 && index < income.length) {
+      runOnJS(setActiveIndex)(index);
+    }
+  });
+
+  const panGesture = Gesture.Pan().onUpdate((e) => {
+    const relativeX = e.x - padding;
+    const step = (width - padding * 2) / (income.length - 1);
+    const index = Math.round(relativeX / step);
+
+    if (index >= 0 && index < income.length) {
+      runOnJS(setActiveIndex)(index);
+    }
+  });
+
+  const gesture = Gesture.Race(panGesture, tapGesture);
 
   const formatCurrency = (value: number) => {
     if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
@@ -105,7 +138,10 @@ export default function InsightChart() {
   };
 
   return (
-    <View style={styles.card}>
+    <Pressable
+      style={styles.card}
+      onPress={() => setActiveIndex(null)}
+    >
       <View style={styles.header}>
         <Text style={styles.title}>Insight Dashboard</Text>
         <View style={styles.filters}>
@@ -136,6 +172,15 @@ export default function InsightChart() {
         <Text style={{ color: "#FF3B30" }}>● Expenses</Text>
       </View>
 
+      {loading ? (
+        <View style={[styles.centered, { height }]}>
+          <ActivityIndicator color="#FF3B30" />
+        </View>
+      ) : !hasData ? (
+        <View style={[styles.centered, { height }]}>
+          <Text style={styles.emptyText}>No transactions in this period</Text>
+        </View>
+      ) : (
       <GestureDetector gesture={gesture}>
         <View>
           <Canvas style={{ width, height }}>
@@ -209,31 +254,50 @@ export default function InsightChart() {
               ]}
             >
               <Text style={styles.tooltipText}>
-                Day {activeIndex + 1}
+                {formatDayLabel(dates[activeIndex])}
               </Text>
-              <Text style={{ color: "##57A773" }}>
+              <Text style={{ color: "#57A773" }}>
                 Income: {formatCurrency(income[activeIndex])}
               </Text>
-              <Text style={{ color: "##FF3B30" }}>
+              <Text style={{ color: "#FF3B30" }}>
                 Expenses: {formatCurrency(expenses[activeIndex])}
               </Text>
             </View>
           )}
         </View>
       </GestureDetector>
+      )}
 
-      <View style={styles.daysRow}>
-        {income.map((_, i) => (
-          <Text key={i} style={styles.dayText}>
-            {i + 1}
-          </Text>
-        ))}
-      </View>
-    </View>
+      {hasData && !loading && (
+        <View style={styles.daysRow}>
+          {dates.map((d, i) => (
+            <Text key={i} style={styles.dayText}>
+              {new Date(d).getDate()}
+            </Text>
+          ))}
+        </View>
+      )}
+    </Pressable>
   );
 }
 
+function formatDayLabel(isoDate: string) {
+  if (!isoDate) return "";
+  return new Date(isoDate).toLocaleDateString(undefined, {
+    day: "2-digit",
+    month: "short",
+  });
+}
+
 const styles = StyleSheet.create({
+  centered: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyText: {
+    color: "#888",
+    fontSize: 13,
+  },
   card: {
     marginHorizontal: 20,
     padding: 20,
