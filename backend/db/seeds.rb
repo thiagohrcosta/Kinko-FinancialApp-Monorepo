@@ -124,5 +124,28 @@ target_partners.times do |index|
   puts "Partners processed: #{company_id}/#{target_partners}" if (company_id % 25).zero?
 end
 
+GOALS = [
+  { key: "save_more_money",             name_pt: "Economizar mais dinheiro todo mês",           name_en: "Save more money each month",            icon: "piggy-bank" },
+  { key: "cut_recurring_subscriptions", name_pt: "Parar de pagar assinaturas que não uso",      name_en: "Cut recurring subscriptions I don't use", icon: "repeat" },
+  { key: "reduce_impulse_spending",     name_pt: "Reduzir compras por impulso",                 name_en: "Reduce impulse spending",               icon: "zap-off" },
+  { key: "build_emergency_fund",        name_pt: "Criar uma reserva de emergência",             name_en: "Build an emergency fund",               icon: "shield" },
+  { key: "pay_off_debt",                name_pt: "Quitar dívidas mais rápido",                  name_en: "Pay off debt faster",                   icon: "trending-down" },
+  { key: "maximize_investments",        name_pt: "Investir mais / maximizar retorno",           name_en: "Maximize investments",                  icon: "trending-up" },
+  { key: "reduce_dining_delivery",      name_pt: "Gastar menos com delivery/restaurante",       name_en: "Reduce dining out & delivery spending", icon: "coffee" },
+  { key: "plan_big_purchase",           name_pt: "Planejar e guardar para uma compra grande",   name_en: "Plan and save for a big purchase",      icon: "target" },
+  { key: "spending_awareness",          name_pt: "Só quero entender pra onde vai meu dinheiro", name_en: "Gain overall spending awareness",       icon: "eye" },
+  { key: "increase_savings_rate",       name_pt: "Aumentar o percentual que guardo da renda",   name_en: "Increase my savings rate",              icon: "percent" }
+].freeze
+
+GOALS.each_with_index do |attrs, index|
+  FinancialGoal.find_or_create_by!(key: attrs[:key]) do |goal|
+    goal.name_pt = attrs[:name_pt]
+    goal.name_en = attrs[:name_en]
+    goal.icon = attrs[:icon]
+    goal.position = index
+    goal.active = true
+  end
+end
+
 puts "Seed completed: #{User.count} users and #{Account.count} accounts."
 puts "Business partners created/updated: #{target_partners}."

@@ -1,0 +1,2 @@
+class RecurringChange < ApplicationRecord
+end

@@ -11,10 +11,14 @@ Rails.application.routes.draw do
   # namespace :api do
   namespace :api do
     namespace :v1 do
-      post 'auth/register', to: 'auth#register'
-      post 'auth/login',    to: 'auth#login'
+      post "auth/register", to: "auth#register"
+      post "auth/login",    to: "auth#login"
 
-      resources :accounts, only: [:index, :show, :create] do
+      get   "goals",       to: "goals#index"
+      get   "goals/mine",  to: "goals#mine"
+      patch "goals",       to: "goals#update"
+
+      resources :accounts, only: [ :index, :show, :create ] do
         collection do
           get :balance
           get :transactions
@@ -26,11 +30,11 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :deposits, only: [:create]
-      resources :transfers, only: [:create]
+      resources :deposits, only: [ :create ]
+      resources :transfers, only: [ :create ]
 
       namespace :webhooks do
-        post 'stripe', to: 'stripe#create'
+        post "stripe", to: "stripe#create"
       end
     end
   end
