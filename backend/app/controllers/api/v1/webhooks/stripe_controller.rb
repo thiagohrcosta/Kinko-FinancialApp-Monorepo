@@ -1,9 +1,9 @@
-require 'ostruct'
+require "ostruct"
 
 class Api::V1::Webhooks::StripeController < ApplicationController
   def create
     payload = request.body.read
-    sig_header = request.env['HTTP_STRIPE_SIGNATURE']
+    sig_header = request.env["HTTP_STRIPE_SIGNATURE"]
 
     event = if Rails.env.development?
       # Em desenvolvimento, aceita webhooks com ou sem assinatura
@@ -11,15 +11,15 @@ class Api::V1::Webhooks::StripeController < ApplicationController
         Stripe::Webhook.construct_event(
           payload,
           sig_header,
-          ENV['STRIPE_WEBHOOK_SECRET']
+          ENV["STRIPE_WEBHOOK_SECRET"]
         )
       rescue Stripe::SignatureVerificationError => e
         # Se falhar a verificação em dev, tenta parsear direto o JSON
         event_data = JSON.parse(payload)
         OpenStruct.new(
-          id: event_data['id'],
-          type: event_data['type'],
-          data: OpenStruct.new(object: event_data['data']['object'])
+          id: event_data["id"],
+          type: event_data["type"],
+          data: OpenStruct.new(object: event_data["data"]["object"])
         )
       end
     else
@@ -28,7 +28,7 @@ class Api::V1::Webhooks::StripeController < ApplicationController
         Stripe::Webhook.construct_event(
           payload,
           sig_header,
-          ENV['STRIPE_WEBHOOK_SECRET']
+          ENV["STRIPE_WEBHOOK_SECRET"]
         )
       rescue Stripe::SignatureVerificationError => e
         Rails.logger.warn("Webhook signature verification failed: #{e.message}")
@@ -70,9 +70,12 @@ class Api::V1::Webhooks::StripeController < ApplicationController
       account_repository: AccountRepository
     )
 
+    payment_intent_id = payment_intent.is_a?(Hash) ? payment_intent["id"] : payment_intent.id
+
     service.call(
       account_uuid: account_uuid,
-      amount_cents: amount_cents
+      amount_cents: amount_cents,
+      reference: payment_intent_id
     )
   rescue ActiveRecord::RecordNotFound => e
     Rails.logger.error("Account not found: #{account_uuid}")

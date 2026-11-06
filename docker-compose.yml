@@ -14,26 +14,23 @@ services:
     depends_on:
       - db
 
-  # web:
-  #   build: ./web
-  #   container_name: kinko_web
-  #   command: yarn dev
-  #   volumes:
-  #     - ./web:/app
-  #   ports:
-  #     - "3001:3001"
-  #   environment:
-  #     PORT: 3001
-  #     WATCHPACK_POLLING: "true"
-  #     NEXT_PUBLIC_API_BASE_URL: "http://localhost:3000"
-  #     API_BASE_URL: "http://backend:3000"
-  #     STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
-  #     STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
-  #     STRIPE_PRICE_ID: ${STRIPE_PRICE_ID}
-  #     STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
-  #     FRONTEND_URL: http://localhost:3001
-  #   depends_on:
-  #     - backend
+  web:
+    build: ./web
+    container_name: kinko_web
+    command: npm run dev
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3001:3001"
+    environment:
+      WATCHPACK_POLLING: "true"
+      # Next.js calls Rails server-side (BFF) over the compose network
+      API_BASE_URL: "http://backend:3000"
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+    depends_on:
+      - backend
 
   db:
     image: postgres:16

@@ -17,6 +17,9 @@ class User < ApplicationRecord
   validates :business_sector, presence: true, if: :business?
   validates :address_street, presence: true
   validates :address_number, presence: true
+  # Sign-up only: legacy users may have no neighborhood and must still be
+  # saveable (e.g. Devise password reset).
+  validates :address_neighborhood, presence: true, on: :create
   validates :address_city, presence: true
   validates :address_state, presence: true
   validates :address_zip_code, presence: true
@@ -34,7 +37,6 @@ class User < ApplicationRecord
   end
 
   def business?
-    user_type == 'business'
+    user_type == "business"
   end
-
 end

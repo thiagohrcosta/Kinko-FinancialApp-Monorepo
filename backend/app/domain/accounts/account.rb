@@ -1,5 +1,5 @@
 # app/domain/accounts/account.rb
-require_relative 'errors'
+require_relative "errors"
 
 module Accounts
   class Account
@@ -15,18 +15,20 @@ module Accounts
       all_entries.sum(&:signed_amount)
     end
 
-    def credit!(money, transaction_id: nil, description: nil)
+    def credit!(money, transaction_id: nil, description: nil, reference: nil)
       validate_amount!(money)
 
       register_entry(
         amount_cents: money.amount_cents,
         currency: money.currency,
         entry_type: :credit,
-        reference: description || transaction_id
+        description: description,
+        transaction_id: transaction_id,
+        reference: reference
       )
     end
 
-    def debit!(money, transaction_id: nil, description: nil)
+    def debit!(money, transaction_id: nil, description: nil, reference: nil)
       validate_amount!(money)
       raise InsufficientFunds if insufficient?(money)
 
@@ -34,7 +36,9 @@ module Accounts
         amount_cents: money.amount_cents,
         currency: money.currency,
         entry_type: :debit,
-        reference: description || transaction_id
+        description: description,
+        transaction_id: transaction_id,
+        reference: reference
       )
     end
 
@@ -60,13 +64,8 @@ module Accounts
       balance < money.amount_cents
     end
 
-    def register_entry(amount_cents:, currency:, entry_type:, reference:)
-      @new_entries << LedgerEntry.new(
-        amount_cents: amount_cents,
-        currency: currency,
-        entry_type: entry_type,
-        reference: reference
-      )
+    def register_entry(**attributes)
+      @new_entries << LedgerEntry.new(**attributes)
     end
   end
 end

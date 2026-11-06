@@ -73,12 +73,12 @@ RSpec.describe Authenticatable, type: :controller do
     end
 
     context "with malformed Authorization header" do
-      it "handles JWT::DecodeError when missing Bearer prefix" do
+      it "returns unauthorized when missing Bearer prefix" do
         request.headers["Authorization"] = "InvalidFormat"
+        get :index
 
-        expect {
-          get :index
-        }.to raise_error(JWT::DecodeError)
+        expect(response).to have_http_status(:unauthorized)
+        expect(JSON.parse(response.body)["error"]).to eq("Invalid token")
       end
 
       it "handles JWT::DecodeError when only Bearer is present" do
@@ -90,12 +90,12 @@ RSpec.describe Authenticatable, type: :controller do
         expect(json["error"]).to eq("Unauthorized")
       end
 
-      it "handles JWT::DecodeError when token is malformed" do
+      it "returns unauthorized when token is malformed" do
         request.headers["Authorization"] = "Bearer malformed_token"
+        get :index
 
-        expect {
-          get :index
-        }.to raise_error(JWT::DecodeError)
+        expect(response).to have_http_status(:unauthorized)
+        expect(JSON.parse(response.body)["error"]).to eq("Invalid token")
       end
     end
 
@@ -111,6 +111,17 @@ RSpec.describe Authenticatable, type: :controller do
         expect(response).to have_http_status(:unauthorized)
         json = JSON.parse(response.body)
         expect(json["error"]).to eq("Token inválido")
+      end
+    end
+
+    context "with expired token" do
+      it "returns unauthorized status" do
+        expired_token = JsonWebToken.encode({ user_id: user.id }, 1.minute.ago)
+        request.headers["Authorization"] = "Bearer #{expired_token}"
+        get :index
+
+        expect(response).to have_http_status(:unauthorized)
+        expect(JSON.parse(response.body)["error"]).to eq("Token expired")
       end
     end
 
@@ -193,7 +204,7 @@ RSpec.describe Authenticatable, type: :controller do
       request.headers["Authorization"] = "Bearer  #{valid_token}"
       get :index
 
-      expect(response.status).to be_in([200, 401])
+      expect(response.status).to be_in([ 200, 401 ])
     end
   end
 end

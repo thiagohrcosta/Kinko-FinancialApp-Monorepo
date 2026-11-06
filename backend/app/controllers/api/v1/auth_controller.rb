@@ -1,7 +1,6 @@
 module Api
   module V1
     class AuthController < ApplicationController
-
       # POST /api/v1/auth/register
       def register
         user = User.new(user_params)
@@ -22,7 +21,7 @@ module Api
           token = JsonWebToken.encode(user_id: user.id)
           render json: { token: token, user: user }, status: :ok
         else
-          render json: { error: 'Email ou senha inválidos' }, status: :unauthorized
+          render json: { error: "Invalid email or password" }, status: :unauthorized
         end
       end
 

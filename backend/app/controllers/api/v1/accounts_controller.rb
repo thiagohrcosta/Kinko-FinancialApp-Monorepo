@@ -27,40 +27,22 @@ module Api
         render json: { uuid: account.uuid }, status: :created
       end
 
+      # GET /api/v1/accounts/balance
       def balance
-        puts "DEBUG: current_user.id = #{current_user.id}"
-        puts "DEBUG: current_user.email = #{current_user.email}"
-
         account = current_user.accounts.first
-        puts "DEBUG: account = #{account.inspect}"
-
-        unless account
-          render json: { error: 'No accounts found for user' }, status: :not_found
-          return
-        end
+        return render json: { error: "No accounts found for user" }, status: :not_found unless account
 
         period_start = 30.days.ago
-        puts "DEBUG: period_start = #{period_start}"
-        puts "DEBUG: period_end = #{Time.current}"
+        recent = account.ledger_entries.where(created_at: period_start..)
 
-        total_entries = account.ledger_entries.count
-        puts "DEBUG: total ledger_entries = #{total_entries}"
-
-        entries_in_period = account.ledger_entries.where(created_at: period_start..).count
-        puts "DEBUG: ledger_entries in period = #{entries_in_period}"
-
-        expenses = account.ledger_entries.where(created_at: period_start..).where(entry_type: :debit).sum(:amount_cents)
-        puts "DEBUG: expenses (debit) = #{expenses}"
-
-        income = account.ledger_entries.where(created_at: period_start..).where(entry_type: :credit).sum(:amount_cents)
-        puts "DEBUG: income (credit) = #{income}"
-
+        expenses = recent.where(entry_type: :debit).sum(:amount_cents)
+        income = recent.where(entry_type: :credit).sum(:amount_cents)
         balance = account.ledger_entries.sum(
           "CASE WHEN entry_type = 'credit' THEN amount_cents ELSE -amount_cents END"
         )
-        puts "DEBUG: balance (all time) = #{balance}"
 
         render json: {
+          account_uuid: account.uuid,
           balance: (balance / 100.0).to_s,
           income: income / 100.0,
           expenses: expenses / 100.0,
@@ -68,73 +50,33 @@ module Api
         }
       end
 
+      # GET /api/v1/accounts/transactions?month=YYYY-MM
       def transactions
         account = current_user.accounts.first
-        unless account
-          render json: { error: 'No accounts found for user' }, status: :not_found
-          return
-        end
+        return render json: { error: "No accounts found for user" }, status: :not_found unless account
 
-        month_str = params[:month]
-        if month_str.blank?
-          month_str = Time.current.strftime('%Y-%m')
-        end
-
-        begin
-          year, month = month_str.split('-').map(&:to_i)
-          month_start = Date.new(year, month, 1).beginning_of_day
-          month_end = (Date.new(year, month, 1) + 1.month).end_of_day
-        rescue StandardError => e
-          return render json: { error: "Invalid month format: #{e.message}" }, status: :bad_request
-        end
+        month_start = parse_month(params[:month])
+        return render json: { error: "Invalid month format, expected YYYY-MM" }, status: :bad_request unless month_start
 
         ledger_entries = account.ledger_entries
-          .where(created_at: month_start..month_end)
-          .order(created_at: :desc)
+          .where(created_at: month_start.beginning_of_day...month_start.next_month.beginning_of_day)
+          .order(created_at: :desc, id: :desc)
+          .to_a
+
+        counterparties = counterparty_entries_for(ledger_entries)
 
         transactions = ledger_entries.map do |entry|
-          description = entry.reference || "Transaction"
-          counterparty_name = nil
-          counterparty_type = nil
-          counterparty_sector = nil
-
-          related_entry = if entry.transaction_id.present?
-            LedgerEntry.where(transaction_id: entry.transaction_id)
-              .where.not(id: entry.id)
-              .first
-          end
-
-          if related_entry
-            related_user = related_entry.account.user
-            counterparty_type = related_user.user_type
-            counterparty_sector = related_user.business_sector
-            counterparty_name = if related_user.user_type == 'business' && related_user.business_name.present?
-                                  related_user.business_name
-                                else
-                                  related_user.full_name
-                                end
-          end
-
-          if is_uuid?(description) || description.blank?
-            if related_entry
-              if entry.entry_type == 'credit'
-                description = "Received from #{counterparty_name}"
-              else
-                description = "Transfer to #{counterparty_name}"
-              end
-            else
-              description = entry.entry_type == 'credit' ? "Deposit" : "Withdrawal"
-            end
-          end
+          related_user = counterparties[entry.transaction_id]&.account&.user
+          counterparty_name = related_user && display_name(related_user)
 
           {
             id: entry.id,
             amount_cents: entry.amount_cents,
             entry_type: entry.entry_type,
-            description: description,
+            description: describe(entry, counterparty_name),
             counterparty_name: counterparty_name,
-            counterparty_type: counterparty_type,
-            counterparty_sector: counterparty_sector,
+            counterparty_type: related_user&.user_type,
+            counterparty_sector: related_user&.business_sector,
             created_at: entry.created_at.iso8601,
             currency: entry.currency
           }
@@ -147,12 +89,12 @@ module Api
       def insights
         account = current_user.accounts.first
         unless account
-          render json: { error: 'No accounts found for user' }, status: :not_found
+          render json: { error: "No accounts found for user" }, status: :not_found
           return
         end
 
         days = params[:range].to_i
-        days = 7 unless [7, 14, 30].include?(days)
+        days = 7 unless [ 7, 14, 30 ].include?(days)
 
         period_end = Date.current
         period_start = period_end - (days - 1).days
@@ -167,18 +109,49 @@ module Api
         render json: {
           range: "#{days}D",
           dates: dates.map(&:iso8601),
-          income: dates.map { |d| (sums[[d, "credit"]] || 0) / 100.0 },
-          expenses: dates.map { |d| (sums[[d, "debit"]] || 0) / 100.0 }
+          income: dates.map { |d| (sums[[ d, "credit" ]] || 0) / 100.0 },
+          expenses: dates.map { |d| (sums[[ d, "debit" ]] || 0) / 100.0 }
         }
       end
 
       private
 
-      def is_uuid?(str)
-        return false if str.blank?
-        str.match?(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+      def parse_month(value)
+        return Date.current.beginning_of_month if value.blank?
+        return nil unless value.to_s.match?(/\A\d{4}-\d{2}\z/)
+
+        year, month = value.split("-").map(&:to_i)
+        Date.new(year, month, 1)
+      rescue Date::Error
+        nil
       end
 
+      # The other leg of each movement (same transaction_id), loaded in a single query.
+      def counterparty_entries_for(entries)
+        entries_by_tx = entries.select { |e| e.transaction_id.present? }.index_by(&:id)
+        tx_ids = entries_by_tx.values.map(&:transaction_id).uniq
+        return {} if tx_ids.empty?
+
+        LedgerEntry
+          .includes(account: :user)
+          .where(transaction_id: tx_ids)
+          .where.not(id: entries_by_tx.keys)
+          .index_by(&:transaction_id)
+      end
+
+      def display_name(user)
+        user.user_type == "business" && user.business_name.present? ? user.business_name : user.full_name
+      end
+
+      def describe(entry, counterparty_name)
+        return entry.description if entry.description.present?
+
+        if counterparty_name
+          entry.credit? ? "Received from #{counterparty_name}" : "Transfer to #{counterparty_name}"
+        else
+          entry.credit? ? "Deposit" : "Withdrawal"
+        end
+      end
     end
   end
 end

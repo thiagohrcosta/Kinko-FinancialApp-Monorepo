@@ -19,7 +19,7 @@ RSpec.describe Accounts::Account do
     end
 
     it "creates account with provided entries" do
-      entries = [Accounts::LedgerEntry.new(amount_cents: 100_00, currency: "USD")]
+      entries = [ Accounts::LedgerEntry.new(amount_cents: 100_00, currency: "USD", entry_type: :credit) ]
       account_with_entries = described_class.new(uuid, entries)
 
       expect(account_with_entries.entries).to eq(entries)
@@ -144,10 +144,22 @@ RSpec.describe Accounts::Account do
         }.to change { account.balance }.by(-100_00)
       end
 
-      it "creates entry with negative amount" do
+      it "creates a debit entry with positive amount and negative signed amount" do
         account.debit!(money_100)
 
-        expect(account.entries.last.amount_cents).to eq(-100_00)
+        entry = account.entries.last
+        expect(entry.entry_type).to eq(:debit)
+        expect(entry.amount_cents).to eq(100_00)
+        expect(entry.signed_amount).to eq(-100_00)
+      end
+
+      it "stores description, transaction_id and reference separately" do
+        account.debit!(money_50, transaction_id: "tx-1", description: "Coffee", reference: "pi_123")
+
+        entry = account.entries.last
+        expect(entry.description).to eq("Coffee")
+        expect(entry.transaction_id).to eq("tx-1")
+        expect(entry.reference).to eq("pi_123")
       end
 
       it "allows multiple debits" do

@@ -5,8 +5,9 @@
 
 **KINKO** is a full-stack fintech platform composed of:
 
-• A Rails-based financial engine exposing a secure REST API
-• A cross-platform mobile application built with React Native
+• A Rails-based financial engine exposing a secure REST API (`backend/`)
+• A cross-platform mobile application built with React Native (`kinko-mobile/`)
+• A web application built with Next.js (`web/`) — see [web/README.md](web/README.md)
 
 The system simulates the core architecture of a modern digital bank, implementing real financial domain principles rather than simplistic balance tracking.
 
