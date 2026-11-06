@@ -17,6 +17,7 @@ class User < ApplicationRecord
   validates :business_sector, presence: true, if: :business?
   validates :address_street, presence: true
   validates :address_number, presence: true
+  validates :address_neighborhood, presence: true
   validates :address_city, presence: true
   validates :address_state, presence: true
   validates :address_zip_code, presence: true

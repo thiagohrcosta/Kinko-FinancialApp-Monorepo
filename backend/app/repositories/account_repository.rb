@@ -7,6 +7,8 @@ class AccountRepository
         amount_cents: entry.amount_cents,
         currency: entry.currency,
         entry_type: entry.entry_type.to_sym,
+        description: entry.description,
+        transaction_id: entry.transaction_id,
         reference: entry.reference
       )
     end
@@ -14,6 +16,8 @@ class AccountRepository
     Accounts::Account.new(record.uuid, entries)
   end
 
+  # O ledger é append-only: só os lançamentos novos são gravados,
+  # os existentes nunca são alterados nem removidos.
   def self.save(domain_account)
     record = Account.find_by!(uuid: domain_account.uuid)
 
@@ -22,7 +26,9 @@ class AccountRepository
         record.ledger_entries.create!(
           amount_cents: entry.amount_cents,
           currency: entry.currency,
-          entry_type: entry.entry_type.to_s,  # ✅ Converter symbol para string
+          entry_type: entry.entry_type.to_s,
+          description: entry.description,
+          transaction_id: entry.transaction_id,
           reference: entry.reference
         )
       end

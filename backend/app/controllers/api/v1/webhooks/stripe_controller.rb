@@ -70,9 +70,12 @@ class Api::V1::Webhooks::StripeController < ApplicationController
       account_repository: AccountRepository
     )
 
+    payment_intent_id = payment_intent.is_a?(Hash) ? payment_intent["id"] : payment_intent.id
+
     service.call(
       account_uuid: account_uuid,
-      amount_cents: amount_cents
+      amount_cents: amount_cents,
+      reference: payment_intent_id
     )
   rescue ActiveRecord::RecordNotFound => e
     Rails.logger.error("Account not found: #{account_uuid}")

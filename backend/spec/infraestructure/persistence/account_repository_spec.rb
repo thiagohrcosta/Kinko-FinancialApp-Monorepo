@@ -21,7 +21,7 @@ RSpec.describe AccountRepository do
       context "with ledger entries" do
         before do
           create(:ledger_entry_record, account_record: account_record, amount_cents: 100_00)
-          create(:ledger_entry_record, account_record: account_record, amount_cents: -50_00)
+          create(:ledger_entry_record, account_record: account_record, amount_cents: 50_00, entry_type: "debit")
           create(:ledger_entry_record, account_record: account_record, amount_cents: 25_00)
         end
 
@@ -40,7 +40,7 @@ RSpec.describe AccountRepository do
         it "preserves entry amounts" do
           account = described_class.load(account_record.uuid)
 
-          amounts = account.entries.map(&:amount_cents)
+          amounts = account.entries.map(&:signed_amount)
           expect(amounts).to contain_exactly(100_00, -50_00, 25_00)
         end
 
@@ -50,11 +50,20 @@ RSpec.describe AccountRepository do
           expect(account.balance).to eq(75_00) # 100 - 50 + 25
         end
 
+        it "loads description and transaction_id" do
+          create(:ledger_entry_record, account_record: account_record, amount_cents: 10_00,
+                 description: "Lunch", transaction_id: "tx-42")
+
+          entry = described_class.load(account_record.uuid).entries.last
+          expect(entry.description).to eq("Lunch")
+          expect(entry.transaction_id).to eq("tx-42")
+        end
+
         it "maintains entry order" do
           account = described_class.load(account_record.uuid)
 
           expect(account.entries.first.amount_cents).to eq(100_00)
-          expect(account.entries.second.amount_cents).to eq(-50_00)
+          expect(account.entries.second.signed_amount).to eq(-50_00)
           expect(account.entries.third.amount_cents).to eq(25_00)
         end
       end
@@ -94,6 +103,17 @@ RSpec.describe AccountRepository do
         expect(amounts).to contain_exactly(100_00, 50_00)
       end
 
+      it "persists description, transaction_id and reference" do
+        domain_account.debit!(Accounts::Money.new(10_00, 'USD'),
+                              transaction_id: "tx-9", description: "Groceries", reference: "pi_9")
+        described_class.save(domain_account)
+
+        record = account_record.ledger_entries.order(:id).last
+        expect(record.description).to eq("Groceries")
+        expect(record.transaction_id).to eq("tx-9")
+        expect(record.reference).to eq("pi_9")
+      end
+
       it "maintains entry order" do
         described_class.save(domain_account)
 
@@ -109,7 +129,7 @@ RSpec.describe AccountRepository do
         create(:ledger_entry_record, account_record: account_record, amount_cents: 50_00)
       end
 
-      it "destroys old entries before saving" do
+      it "appends new entries without touching existing ones" do
         loaded_account = described_class.load(account_record.uuid)
 
         money = Accounts::Money.new(25_00, 'USD')
@@ -120,7 +140,7 @@ RSpec.describe AccountRepository do
         }.to change { account_record.ledger_entries.count }.from(2).to(3)
       end
 
-      it "replaces all entries with current state" do
+      it "keeps existing entries and adds the new one" do
         loaded_account = described_class.load(account_record.uuid)
         money = Accounts::Money.new(75_00, 'USD')
         loaded_account.credit!(money)
@@ -138,20 +158,20 @@ RSpec.describe AccountRepository do
 
         described_class.save(loaded_account)
 
-        amounts = account_record.ledger_entries.pluck(:amount_cents)
-        expect(amounts).to include(-30_00)
+        rows = account_record.ledger_entries.pluck(:entry_type, :amount_cents)
+        expect(rows).to include(["debit", 30_00])
       end
     end
 
     context "with empty entries" do
-      it "removes all ledger entries" do
+      it "never deletes persisted entries (append-only ledger)" do
         create(:ledger_entry_record, account_record: account_record, amount_cents: 100_00)
 
         empty_account = Accounts::Account.new(account_record.uuid, [])
 
         expect {
           described_class.save(empty_account)
-        }.to change { account_record.ledger_entries.count }.from(1).to(0)
+        }.not_to change { account_record.ledger_entries.count }
       end
     end
 

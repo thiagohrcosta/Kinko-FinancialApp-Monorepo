@@ -13,10 +13,7 @@ type UserBalanceResponse = {
 export default async function getUserBalance(): Promise<UserBalanceResponse> {
   const token = await AsyncStorage.getItem('authToken');
 
-  console.log('DEBUG: Token from AsyncStorage:', token);
-
   if (!token) {
-    console.error('ERROR: No token found in AsyncStorage');
     throw new Error('No authentication token found');
   }
 
@@ -25,7 +22,5 @@ export default async function getUserBalance(): Promise<UserBalanceResponse> {
       Authorization: `Bearer ${token}`,
     },
   });
-
-  console.log('DEBUG: Balance response:', response.data);
   return response.data;
 }

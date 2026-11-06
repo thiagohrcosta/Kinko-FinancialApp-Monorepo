@@ -6,7 +6,7 @@ module Payments
       @account_repository = account_repository
     end
 
-    def call(account_uuid:, amount_cents:)
+    def call(account_uuid:, amount_cents:, reference: nil)
       user_account   = @account_repository.load(account_uuid)
       system_account = @account_repository.load(SYSTEM_ACCOUNT_UUID)
 
@@ -16,8 +16,8 @@ module Payments
       user_description = "Deposit from Card Payment"
       system_description = "Card Payment Processed"
 
-      user_account.credit!(money, description: user_description)
-      system_account.credit!(money, description: system_description)
+      user_account.credit!(money, description: user_description, reference: reference)
+      system_account.credit!(money, description: system_description, reference: reference)
 
       ActiveRecord::Base.transaction do
         @account_repository.save(user_account)
