@@ -22,6 +22,10 @@ module Authenticatable
 
     @current_user = User.find(@decoded[:user_id])
     puts "DEBUG TOKEN: found user = #{@current_user.inspect}"
+  rescue JWT::ExpiredSignature
+    raise ExceptionHandler::InvalidToken, 'Token expired'
+  rescue JWT::DecodeError
+    raise ExceptionHandler::InvalidToken, 'Invalid token'
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'User not found' }, status: :unauthorized
   end

@@ -46,4 +46,4 @@
 
 /kinko-mobile/node_modules
 
-.env*
+.env*/web/node_modules
