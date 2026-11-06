@@ -17,6 +17,7 @@ RSpec.describe "Api::V1::Accounts", type: :request do
       expect(json["balance"]).to eq("70.0")
       expect(json["income"]).to eq(100.0)
       expect(json["expenses"]).to eq(30.0)
+      expect(json["account_uuid"]).to eq(account.uuid)
     end
 
     it "requires authentication" do
@@ -66,7 +67,7 @@ RSpec.describe "Api::V1::Accounts", type: :request do
 
       get "/api/v1/accounts/transactions", params: { month: "2026-01" }, headers: headers
 
-      expect(JSON.parse(response.body).map { |t| t["amount_cents"] }).to eq([1_00])
+      expect(JSON.parse(response.body).map { |t| t["amount_cents"] }).to eq([ 1_00 ])
     end
 
     it "rejects an invalid month" do

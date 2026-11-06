@@ -44,6 +44,8 @@ npm install
 npm run dev                  # http://localhost:3001
 ```
 
+Checks (os mesmos do CI): `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
+
 Com Docker, a partir da raiz do monorepo: `docker compose up` (web em `:3001`, backend em `:3000`).
 
 Usuários de seed (`bin/rails db:seed` no backend) usam a senha `password123`, ex.: `admin@kinko.com`.

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getTransactions, type Transaction } from "@/lib/kinko";
-import { formatCurrency, formatTime, monthKey, monthLabel, shiftMonth } from "@/lib/format";
+import { dayKey, formatCurrency, formatDayHeading, formatTime, monthKey, monthLabel, shiftMonth } from "@/lib/format";
 import { ReceiptLong } from "@/components/icons";
 import { TransactionRow } from "@/components/transaction-row";
 import { CardSkeleton } from "../_components/skeleton";
@@ -16,17 +16,12 @@ function parseMonth(value: string | string[] | undefined, current: string) {
 }
 
 function groupByDay(transactions: Transaction[]) {
-  const fmt = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" });
   const groups = new Map<string, Transaction[]>();
   for (const tx of transactions) {
-    const key = tx.created_at.slice(0, 10);
+    const key = dayKey(tx.created_at);
     groups.set(key, [...(groups.get(key) ?? []), tx]);
   }
-  return [...groups.entries()].map(([day, items]) => ({
-    day,
-    label: fmt.format(new Date(`${day}T12:00:00`)),
-    items,
-  }));
+  return [...groups.entries()].map(([day, items]) => ({ day, label: formatDayHeading(day), items }));
 }
 
 async function Statement({ searchParams }: { searchParams: PageProps<"/dashboard/statement">["searchParams"] }) {
@@ -80,6 +75,8 @@ async function Statement({ searchParams }: { searchParams: PageProps<"/dashboard
           <p className="mt-1 text-xl font-bold tabular-nums">{formatCurrency(credits - debits)}</p>
         </div>
       </div>
+
+      <p className="text-right text-[11px] text-subtle">Horários em UTC</p>
 
       {transactions.length === 0 ? (
         <div className="card flex flex-col items-center gap-2 py-14 text-subtle">

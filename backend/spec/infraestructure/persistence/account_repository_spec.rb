@@ -159,7 +159,7 @@ RSpec.describe AccountRepository do
         described_class.save(loaded_account)
 
         rows = account_record.ledger_entries.pluck(:entry_type, :amount_cents)
-        expect(rows).to include(["debit", 30_00])
+        expect(rows).to include([ "debit", 30_00 ])
       end
     end
 

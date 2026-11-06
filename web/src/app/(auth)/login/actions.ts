@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { ApiError } from "@/lib/api";
 import { login as apiLogin } from "@/lib/kinko";
 import { createSession } from "@/lib/session";
@@ -19,6 +19,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     const { token, user } = await apiLogin(email, password);
     await createSession(token, { id: user.id, email: user.email, fullName: user.full_name });
   } catch (err) {
+    unstable_rethrow(err);
     if (err instanceof ApiError && err.status === 401) {
       return { error: "E-mail ou senha inválidos.", email };
     }

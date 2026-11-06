@@ -1,6 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { unstable_rethrow } from "next/navigation";
 import { ApiError } from "@/lib/api";
 import { createTransfer } from "@/lib/kinko";
 import { parseAmountToCents } from "@/lib/format";
@@ -31,7 +32,7 @@ export async function transfer(_prev: TransferState, formData: FormData): Promis
   }
   const amountCents = parseAmountToCents(values.amount);
   if (!amountCents) {
-    return { status: "error", error: "Informe um valor maior que zero.", values };
+    return { status: "error", error: "Informe um valor válido maior que zero (ex.: 25.50).", values };
   }
 
   try {
@@ -43,6 +44,7 @@ export async function transfer(_prev: TransferState, formData: FormData): Promis
     refresh(); // saldo e extrato atualizados ao navegar de volta
     return { status: "success", amountCents, destination: values.destination, transactionId: res.transaction_id };
   } catch (err) {
+    unstable_rethrow(err); // ex.: redirect para /auth/logout quando o token expira
     if (err instanceof ApiError && ERRORS[err.message]) {
       return { status: "error", error: ERRORS[err.message], values };
     }

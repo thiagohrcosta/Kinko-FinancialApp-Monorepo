@@ -1,0 +1,93 @@
+name: Backend
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  test:
+    name: RSpec
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+
+    env:
+      RAILS_ENV: test
+      # Sobrescreve o host "db" do database.yml (nome do serviço no docker-compose)
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/kinko_test
+      # Valores fictícios: os specs fazem stub do Stripe
+      STRIPE_SECRET_KEY: sk_test_ci_dummy
+      STRIPE_WEBHOOK_SECRET: whsec_ci_dummy
+      SYSTEM_ACCOUNT_UUID: 00000000-0000-4000-8000-000000000000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          working-directory: backend
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Set up database
+        run: bin/rails db:prepare
+
+      - name: Run RSpec
+        run: bundle exec rspec
+
+  security:
+    name: Brakeman
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          working-directory: backend
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Run Brakeman security scan
+        run: bin/brakeman --no-pager --exit-on-warn
+
+  lint:
+    name: RuboCop (changed files)
+    # O main ainda tem dívida de estilo anterior; no PR checamos apenas
+    # os arquivos Ruby alterados para não bloquear por código não tocado.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          working-directory: backend
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Lint changed Ruby files
+        run: |
+          files=$(git diff --name-only --diff-filter=AMR "origin/${{ github.base_ref }}...HEAD" -- '*.rb' | sed 's#^backend/##')
+          if [ -z "$files" ]; then
+            echo "No Ruby files changed."
+            exit 0
+          fi
+          echo "$files"
+          bin/rubocop --force-exclusion -f github $files

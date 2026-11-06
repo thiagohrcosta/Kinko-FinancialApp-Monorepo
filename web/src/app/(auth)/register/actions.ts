@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { ApiError } from "@/lib/api";
 import { register as apiRegister, type RegisterPayload } from "@/lib/kinko";
 import { createSession } from "@/lib/session";
@@ -50,8 +50,10 @@ export async function register(_prev: RegisterState, formData: FormData): Promis
     const { token, user } = await apiRegister(payload);
     await createSession(token, { id: user.id, email: user.email, fullName: user.full_name });
   } catch (err) {
+    unstable_rethrow(err);
     if (err instanceof ApiError && err.status === 422) {
-      return { errors: err.message.split(", ").map((m) => TRANSLATIONS[m] ?? m), values: echo };
+      const messages = err.errors.length ? err.errors : [err.message];
+      return { errors: messages.map((m) => TRANSLATIONS[m] ?? m), values: echo };
     }
     console.error("Register failed:", err);
     return { errors: ["Não foi possível conectar ao servidor. Tente novamente."], values: echo };

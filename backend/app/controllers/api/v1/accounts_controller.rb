@@ -30,7 +30,7 @@ module Api
       # GET /api/v1/accounts/balance
       def balance
         account = current_user.accounts.first
-        return render json: { error: 'No accounts found for user' }, status: :not_found unless account
+        return render json: { error: "No accounts found for user" }, status: :not_found unless account
 
         period_start = 30.days.ago
         recent = account.ledger_entries.where(created_at: period_start..)
@@ -42,6 +42,7 @@ module Api
         )
 
         render json: {
+          account_uuid: account.uuid,
           balance: (balance / 100.0).to_s,
           income: income / 100.0,
           expenses: expenses / 100.0,
@@ -52,10 +53,10 @@ module Api
       # GET /api/v1/accounts/transactions?month=YYYY-MM
       def transactions
         account = current_user.accounts.first
-        return render json: { error: 'No accounts found for user' }, status: :not_found unless account
+        return render json: { error: "No accounts found for user" }, status: :not_found unless account
 
         month_start = parse_month(params[:month])
-        return render json: { error: 'Invalid month format, expected YYYY-MM' }, status: :bad_request unless month_start
+        return render json: { error: "Invalid month format, expected YYYY-MM" }, status: :bad_request unless month_start
 
         ledger_entries = account.ledger_entries
           .where(created_at: month_start.beginning_of_day...month_start.next_month.beginning_of_day)
@@ -88,12 +89,12 @@ module Api
       def insights
         account = current_user.accounts.first
         unless account
-          render json: { error: 'No accounts found for user' }, status: :not_found
+          render json: { error: "No accounts found for user" }, status: :not_found
           return
         end
 
         days = params[:range].to_i
-        days = 7 unless [7, 14, 30].include?(days)
+        days = 7 unless [ 7, 14, 30 ].include?(days)
 
         period_end = Date.current
         period_start = period_end - (days - 1).days
@@ -108,8 +109,8 @@ module Api
         render json: {
           range: "#{days}D",
           dates: dates.map(&:iso8601),
-          income: dates.map { |d| (sums[[d, "credit"]] || 0) / 100.0 },
-          expenses: dates.map { |d| (sums[[d, "debit"]] || 0) / 100.0 }
+          income: dates.map { |d| (sums[[ d, "credit" ]] || 0) / 100.0 },
+          expenses: dates.map { |d| (sums[[ d, "debit" ]] || 0) / 100.0 }
         }
       end
 
@@ -119,7 +120,7 @@ module Api
         return Date.current.beginning_of_month if value.blank?
         return nil unless value.to_s.match?(/\A\d{4}-\d{2}\z/)
 
-        year, month = value.split('-').map(&:to_i)
+        year, month = value.split("-").map(&:to_i)
         Date.new(year, month, 1)
       rescue Date::Error
         nil
@@ -139,7 +140,7 @@ module Api
       end
 
       def display_name(user)
-        user.user_type == 'business' && user.business_name.present? ? user.business_name : user.full_name
+        user.user_type == "business" && user.business_name.present? ? user.business_name : user.full_name
       end
 
       def describe(entry, counterparty_name)

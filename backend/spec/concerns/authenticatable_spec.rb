@@ -204,7 +204,7 @@ RSpec.describe Authenticatable, type: :controller do
       request.headers["Authorization"] = "Bearer  #{valid_token}"
       get :index
 
-      expect(response.status).to be_in([200, 401])
+      expect(response.status).to be_in([ 200, 401 ])
     end
   end
 end

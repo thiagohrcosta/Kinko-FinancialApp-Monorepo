@@ -22,6 +22,15 @@ RSpec.describe User, type: :model do
     it { is_expected.to validate_length_of(:password).is_at_least(6) }
   end
 
+  describe "legacy users without neighborhood" do
+    it "can still be updated (neighborhood is only required on sign-up)" do
+      user = create(:user)
+      user.update_column(:address_neighborhood, nil)
+
+      expect(user.update(full_name: "Renamed")).to be(true)
+    end
+  end
+
 
   # describe "associations" do
   #   # it { is_expected.to have_many(:xxxx) }

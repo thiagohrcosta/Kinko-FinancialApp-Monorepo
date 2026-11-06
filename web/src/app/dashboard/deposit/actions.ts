@@ -1,5 +1,6 @@
 "use server";
 
+import { unstable_rethrow } from "next/navigation";
 import { ApiError } from "@/lib/api";
 import { createDeposit } from "@/lib/kinko";
 import { validateDepositAmount } from "@/lib/deposit-rules";
@@ -17,6 +18,7 @@ export async function startDeposit(rawAmount: string): Promise<StartDepositResul
     const { client_secret } = await createDeposit(amountCents);
     return { ok: true, clientSecret: client_secret, amountCents };
   } catch (err) {
+    unstable_rethrow(err); // ex.: redirect para /auth/logout quando o token expira
     if (err instanceof ApiError && err.status === 502) {
       return { ok: false, error: "O provedor de pagamentos está indisponível no momento. Tente novamente mais tarde." };
     }

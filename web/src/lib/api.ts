@@ -8,20 +8,25 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
+    /** Mensagens individuais de validação do Rails (`errors: [...]`), quando houver. */
+    public errors: string[] = [],
   ) {
     super(message);
   }
 }
 
-async function errorMessage(res: Response): Promise<string> {
+async function toApiError(res: Response): Promise<ApiError> {
   try {
     const body = await res.json();
-    if (typeof body?.error === "string") return body.error;
-    if (Array.isArray(body?.errors)) return body.errors.join(", ");
+    if (typeof body?.error === "string") return new ApiError(body.error, res.status);
+    if (Array.isArray(body?.errors)) {
+      const errors = body.errors.map(String);
+      return new ApiError(errors.join("; "), res.status, errors);
+    }
   } catch {
     // corpo não-JSON
   }
-  return `Request failed with status ${res.status}`;
+  return new ApiError(`Request failed with status ${res.status}`, res.status);
 }
 
 /** Chamada sem autenticação (login, registro). */
@@ -31,7 +36,7 @@ export async function publicFetch<T>(path: string, init?: RequestInit): Promise<
     headers: { "Content-Type": "application/json", Accept: "application/json", ...init?.headers },
     cache: "no-store",
   });
-  if (!res.ok) throw new ApiError(await errorMessage(res), res.status);
+  if (!res.ok) throw await toApiError(res);
   return res.json() as Promise<T>;
 }
 
@@ -56,6 +61,6 @@ export async function authFetch<T>(path: string, init?: RequestInit): Promise<T>
 
   // Componentes de servidor não podem apagar cookies; o route handler faz isso.
   if (res.status === 401) redirect("/auth/logout?expired=1");
-  if (!res.ok) throw new ApiError(await errorMessage(res), res.status);
+  if (!res.ok) throw await toApiError(res);
   return res.json() as Promise<T>;
 }

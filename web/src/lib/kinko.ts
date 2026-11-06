@@ -7,6 +7,7 @@ export type LoginResponse = {
 };
 
 export type Balance = {
+  account_uuid: string;
   balance: string;
   income: number;
   expenses: number;
@@ -55,7 +56,6 @@ export function getInsights(range: InsightRange) {
   return authFetch<Insights>(`/api/v1/accounts/insights?range=${range}`);
 }
 
-export type Account = { uuid: string; balance: number; status: string };
 
 export type RegisterPayload = {
   email: string;
@@ -81,11 +81,6 @@ export function register(payload: RegisterPayload) {
     method: "POST",
     body: JSON.stringify(payload),
   });
-}
-
-export async function getPrimaryAccount(): Promise<Account | null> {
-  const accounts = await authFetch<Account[]>("/api/v1/accounts");
-  return accounts[0] ?? null;
 }
 
 export function createTransfer(input: { destination_account_uuid: string; amount_cents: number; description?: string }) {

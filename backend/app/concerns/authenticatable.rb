@@ -9,20 +9,20 @@ module Authenticatable
   private
 
   def authenticate_user!
-    header = request.headers['Authorization'].to_s
-    token = header.split(' ').last
+    header = request.headers["Authorization"].to_s
+    token = header.split(" ").last
     token = nil if header.match?(/\ABearer\s*\z/i)
-    raise ExceptionHandler::MissingToken, 'Unauthorized' if token.blank?
+    raise ExceptionHandler::MissingToken, "Unauthorized" if token.blank?
 
     @decoded = JsonWebToken.decode(token)
 
     @current_user = User.find(@decoded[:user_id])
   rescue JWT::ExpiredSignature
-    raise ExceptionHandler::InvalidToken, 'Token expired'
+    raise ExceptionHandler::InvalidToken, "Token expired"
   rescue JWT::DecodeError
-    raise ExceptionHandler::InvalidToken, 'Invalid token'
+    raise ExceptionHandler::InvalidToken, "Invalid token"
   rescue ActiveRecord::RecordNotFound
-    render json: { error: 'User not found' }, status: :unauthorized
+    render json: { error: "User not found" }, status: :unauthorized
   end
 
   def current_user

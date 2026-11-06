@@ -1,5 +1,5 @@
 # app/domain/accounts/account.rb
-require_relative 'errors'
+require_relative "errors"
 
 module Accounts
   class Account

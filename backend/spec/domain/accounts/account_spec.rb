@@ -19,7 +19,7 @@ RSpec.describe Accounts::Account do
     end
 
     it "creates account with provided entries" do
-      entries = [Accounts::LedgerEntry.new(amount_cents: 100_00, currency: "USD", entry_type: :credit)]
+      entries = [ Accounts::LedgerEntry.new(amount_cents: 100_00, currency: "USD", entry_type: :credit) ]
       account_with_entries = described_class.new(uuid, entries)
 
       expect(account_with_entries.entries).to eq(entries)
