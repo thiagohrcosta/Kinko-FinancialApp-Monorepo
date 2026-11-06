@@ -1,39 +1,40 @@
 import { getBalance } from "@/lib/kinko";
 import { formatCurrency } from "@/lib/format";
+import { AccountBalanceWallet, ArrowDownward, ArrowUpward } from "@/components/icons";
 
 export async function BalanceSummary() {
   const { balance, income, expenses } = await getBalance();
-  const total = Number(balance);
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <div className="card bg-gradient-to-br from-emerald-600 to-emerald-700 p-6 text-white md:col-span-1">
-        <p className="text-sm font-medium text-emerald-100">Saldo disponível</p>
-        <p className="mt-2 text-3xl font-semibold tabular-nums">{formatCurrency(total)}</p>
-        <p className="mt-1 text-xs text-emerald-100">Calculado a partir do ledger</p>
+      {/* Saldo com o gradiente da marca (mesmo do botão de login do app) */}
+      <div className="rounded-xl bg-gradient-to-r from-kinko-light to-kinko-dark p-5 text-white shadow-[0_2px_6px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center gap-2">
+          <AccountBalanceWallet className="size-6" />
+          <p className="text-sm font-semibold">Saldo</p>
+        </div>
+        <p className="mt-3 text-[28px] font-bold tabular-nums">{formatCurrency(Number(balance))}</p>
+        <p className="text-xs text-white/75">Calculado a partir do ledger</p>
       </div>
-      <Stat label="Entradas (30 dias)" value={income} tone="income" />
-      <Stat label="Saídas (30 dias)" value={expenses} tone="expense" />
-    </div>
-  );
-}
 
-function Stat({ label, value, tone }: { label: string; value: number; tone: "income" | "expense" }) {
-  const isIncome = tone === "income";
-  return (
-    <div className="card p-6">
-      <div className="flex items-center gap-2">
-        <span
-          className={`grid size-7 place-items-center rounded-full text-sm ${
-            isIncome ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
-          }`}
-          aria-hidden
-        >
-          {isIncome ? "↓" : "↑"}
-        </span>
-        <p className="text-sm font-medium text-slate-600">{label}</p>
+      {/* Mesmo padrão do BalanceCard do app */}
+      <div className="card p-5">
+        <div className="flex items-center gap-2">
+          <ArrowDownward className="size-6 text-credit" />
+          <p className="text-sm font-semibold">Entradas</p>
+        </div>
+        <p className="mt-3 text-[22px] font-bold tabular-nums">{formatCurrency(income)}</p>
+        <p className="text-xs text-subtle">Últimos 30 dias</p>
       </div>
-      <p className="mt-3 text-2xl font-semibold tabular-nums">{formatCurrency(value)}</p>
+
+      <div className="card p-5">
+        <div className="flex items-center gap-2">
+          <ArrowUpward className="size-6 text-debit" />
+          <p className="text-sm font-semibold">Saídas</p>
+        </div>
+        <p className="mt-3 text-[22px] font-bold tabular-nums">{formatCurrency(expenses)}</p>
+        <p className="text-xs text-subtle">Últimos 30 dias</p>
+      </div>
     </div>
   );
 }

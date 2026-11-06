@@ -1,25 +1,48 @@
 @import "tailwindcss";
 
+/*
+ * Paleta oficial do Kinko — extraída do logo (kinko-mobile/assets/images/logo.png)
+ * e dos estilos do app mobile (kinko-mobile/app/**).
+ */
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-roboto);
+
+  /* Marca */
+  --color-kinko-logo: #f52f35; /* quadrado do "K" no logo */
+  --color-kinko: #d01c1c; /* vermelho principal (título "Kinko!", botões, loaders) */
+  --color-kinko-light: #ff3b3b; /* início do gradiente do botão de login */
+  --color-kinko-dark: #b30000; /* fim do gradiente do botão de login */
+  --color-kinko-accent: #ff3b30; /* filtros ativos, botões secundários, linha de despesas */
+  --color-kinko-link: #c02a2a; /* links ("Forgot password?") */
+
+  /* Texto e superfícies */
+  --color-ink: #1f212a; /* "KINKO" no logo */
+  --color-ink-soft: #2c2c2c;
+  --color-muted: #888888;
+  --color-subtle: #999999;
+  --color-surface: #f5f5f5; /* fundo das telas */
+  --color-chip: #eeeeee; /* filtros inativos */
+
+  /* Semânticas financeiras */
+  --color-income: #57a773; /* linha de entradas no gráfico */
+  --color-credit: #16a34a; /* valores de crédito no extrato */
+  --color-debit: #dc2626; /* valores de débito no extrato */
+  --color-expense: #ff3b30; /* linha de saídas no gráfico */
 }
 
 body {
-  @apply bg-slate-50 font-sans text-slate-900;
+  @apply bg-surface font-sans text-ink;
 }
 
 @layer components {
+  /* Cards brancos com sombra suave, como no app (borderRadius 12, shadowOpacity ~0.08) */
   .card {
-    @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+    @apply rounded-xl bg-white shadow-[0_2px_6px_rgba(0,0,0,0.08)];
   }
-  .input {
-    @apply block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none;
-  }
-  .btn-primary {
-    @apply inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60;
+  .btn-kinko {
+    @apply inline-flex h-[50px] items-center justify-center rounded-2xl bg-gradient-to-r from-kinko-light to-kinko-dark px-5 text-base font-bold text-white shadow-sm transition hover:brightness-105 focus-visible:ring-2 focus-visible:ring-kinko focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60;
   }
   .btn-ghost {
-    @apply inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900;
+    @apply inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium text-ink-soft transition hover:bg-chip hover:text-kinko;
   }
 }

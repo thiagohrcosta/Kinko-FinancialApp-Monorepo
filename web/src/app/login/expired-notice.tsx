@@ -6,7 +6,7 @@ export async function ExpiredNotice({
   const { expired } = await searchParams;
   if (!expired) return null;
   return (
-    <p className="mb-5 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+    <p className="mb-4 rounded-xl bg-[#FFF5F5] px-3 py-2 text-sm text-kinko">
       Sua sessão expirou. Entre novamente.
     </p>
   );

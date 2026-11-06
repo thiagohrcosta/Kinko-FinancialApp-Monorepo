@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { getSessionUser } from "@/lib/session";
 import { BalanceSummary } from "./_components/balance-summary";
 import { InsightsChart } from "./_components/insights-chart";
 import { RecentTransactions } from "./_components/recent-transactions";
@@ -7,13 +8,17 @@ import { CardSkeleton } from "./_components/skeleton";
 
 export const metadata: Metadata = { title: "Dashboard · Kinko" };
 
+async function Welcome() {
+  const user = await getSessionUser();
+  return <h1 className="text-xl font-bold">Bem-vindo de volta, {user?.fullName ?? "usuário"}</h1>;
+}
+
 export default function DashboardPage({ searchParams }: PageProps<"/dashboard">) {
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Visão geral</h1>
-        <p className="text-sm text-slate-500">Saldo derivado do ledger e movimentações dos últimos 30 dias.</p>
-      </div>
+    <div className="space-y-6">
+      <Suspense fallback={<div className="h-7 w-64 animate-pulse rounded bg-chip" />}>
+        <Welcome />
+      </Suspense>
 
       <Suspense
         fallback={

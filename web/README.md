@@ -32,3 +32,22 @@ npm run dev                  # http://localhost:3001
 Com Docker, a partir da raiz do monorepo: `docker compose up` (web em `:3001`, backend em `:3000`).
 
 Usuários de seed (`bin/rails db:seed` no backend) usam a senha `password123`, ex.: `admin@kinko.com`.
+
+## Identidade visual
+
+O tema segue o app mobile e o logo oficial. Os tokens ficam em `src/app/globals.css` (`@theme`) e viram classes do
+Tailwind (`bg-kinko`, `text-income`, …):
+
+| Token | Cor | Origem / uso |
+| --- | --- | --- |
+| `kinko-logo` | `#F52F35` | Quadrado do "K" no logo |
+| `kinko` | `#D01C1C` | Vermelho principal ("Kinko!", botões, loaders) |
+| `kinko-light` → `kinko-dark` | `#FF3B3B` → `#B30000` | Gradiente do botão de login / card de saldo |
+| `kinko-accent` | `#FF3B30` | Filtros ativos, linha de saídas |
+| `ink` | `#1F212A` | Texto "KINKO" do logo |
+| `income` / `credit` | `#57A773` / `#16A34A` | Entradas (gráfico / extrato) |
+| `debit` | `#DC2626` | Saídas no extrato |
+| `surface` / `chip` | `#F5F5F5` / `#EEEEEE` | Fundo das telas / filtros inativos |
+
+Fonte: **Roboto** (a mesma do app). Assets em `public/` vêm de `kinko-mobile/assets/images/`
+(`logo.png`, `bglogin.png` convertido para JPG; `kinko-mark.png` e o favicon são o "K" recortado do logo).
