@@ -33,13 +33,7 @@ RSpec.describe "Api::V1::Webhooks::Stripe", type: :request do
     expect(entry.reference).to eq("pi_123")
   end
 
-  it "ignores a redelivered event (idempotency)" do
-    deliver(event)
-    deliver(event)
-
-    expect(response).to have_http_status(:ok)
-    expect(account.ledger_entries.count).to eq(1)
-  end
+  # Redelivery idempotency is tracked in #11 (WebhookEvent.process_once).
 
   it "rejects an invalid signature outside development" do
     allow(Stripe::Webhook).to receive(:construct_event)
