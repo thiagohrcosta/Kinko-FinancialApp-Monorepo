@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Logo } from "@/components/logo";
 import { getSessionUser } from "@/lib/session";
-import { logout } from "../login/actions";
+import { logout } from "@/lib/session-actions";
+import { DashboardNav } from "./_components/nav";
 
 async function UserMenu() {
   const user = await getSessionUser();
@@ -24,7 +25,7 @@ async function UserMenu() {
 export default function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <header className="sticky top-0 z-10 bg-white shadow-[0_1px_0_rgba(0,0,0,0.06)]">
+      <header className="sticky top-0 z-20 bg-white shadow-[0_1px_0_rgba(0,0,0,0.06)]">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
           <Link href="/dashboard" aria-label="Kinko — início">
             <Logo />
@@ -32,6 +33,9 @@ export default function DashboardLayout({ children }: LayoutProps<"/dashboard">)
           <Suspense fallback={<div className="h-9 w-32 animate-pulse rounded-lg bg-chip" />}>
             <UserMenu />
           </Suspense>
+        </div>
+        <div className="mx-auto max-w-6xl px-5">
+          <DashboardNav />
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-8">{children}</main>

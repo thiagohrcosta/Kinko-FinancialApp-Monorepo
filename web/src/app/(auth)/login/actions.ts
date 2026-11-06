@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { ApiError } from "@/lib/api";
 import { login as apiLogin } from "@/lib/kinko";
-import { createSession, deleteSession } from "@/lib/session";
+import { createSession } from "@/lib/session";
 
 export type LoginState = { error?: string; email?: string };
 
@@ -27,9 +27,4 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   }
 
   redirect("/dashboard");
-}
-
-export async function logout() {
-  await deleteSession();
-  redirect("/login");
 }

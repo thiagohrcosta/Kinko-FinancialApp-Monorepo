@@ -1,6 +1,7 @@
 import { getBalance } from "@/lib/kinko";
 import { formatCurrency } from "@/lib/format";
 import { AccountBalanceWallet, ArrowDownward, ArrowUpward } from "@/components/icons";
+import Link from "next/link";
 
 export async function BalanceSummary() {
   const { balance, income, expenses } = await getBalance();
@@ -14,7 +15,14 @@ export async function BalanceSummary() {
           <p className="text-sm font-semibold">Saldo</p>
         </div>
         <p className="mt-3 text-[28px] font-bold tabular-nums">{formatCurrency(Number(balance))}</p>
-        <p className="text-xs text-white/75">Calculado a partir do ledger</p>
+        <div className="mt-3 flex gap-2">
+          <Link href="/dashboard/deposit" className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-kinko hover:bg-white/90">
+            Depositar
+          </Link>
+          <Link href="/dashboard/transfer" className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white hover:bg-white/30">
+            Transferir
+          </Link>
+        </div>
       </div>
 
       {/* Mesmo padrão do BalanceCard do app */}

@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { getTransactions } from "@/lib/kinko";
-import { formatCurrency, formatDate } from "@/lib/format";
-import { ArrowDownward, ArrowUpward, ReceiptLong } from "@/components/icons";
+import { formatDate } from "@/lib/format";
+import { ReceiptLong } from "@/components/icons";
+import { TransactionRow } from "@/components/transaction-row";
 
 export async function RecentTransactions() {
-  const transactions = (await getTransactions()).slice(0, 8);
+  const transactions = (await getTransactions()).slice(0, 6);
 
   return (
     <div className="card p-5">
@@ -16,35 +18,21 @@ export async function RecentTransactions() {
         </div>
       ) : (
         <ul className="mt-3 divide-y divide-[#eee]">
-          {transactions.map((tx) => {
-            const isCredit = tx.entry_type === "credit";
-            const Icon = isCredit ? ArrowDownward : ArrowUpward;
-            return (
-              <li key={tx.id} className="flex items-center gap-3 py-3">
-                {/* Mesmo padrão do extrato do app: círculo com a cor a 12% */}
-                <span
-                  className={`grid size-11 shrink-0 place-items-center rounded-full ${
-                    isCredit ? "bg-credit/12 text-credit" : "bg-debit/12 text-debit"
-                  }`}
-                >
-                  <Icon className="size-5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-semibold text-black">{tx.description}</p>
-                  <p className="text-xs text-subtle">
-                    {formatDate(tx.created_at)}
-                    {tx.counterparty_sector ? ` · ${tx.counterparty_sector}` : ""}
-                  </p>
-                </div>
-                <span className={`shrink-0 text-[15px] font-bold tabular-nums ${isCredit ? "text-credit" : "text-debit"}`}>
-                  {isCredit ? "+" : "−"}
-                  {formatCurrency(tx.amount_cents / 100, tx.currency || "USD")}
-                </span>
-              </li>
-            );
-          })}
+          {transactions.map((tx) => (
+            <TransactionRow key={tx.id} tx={tx} meta={formatDate(tx.created_at)} />
+          ))}
         </ul>
       )}
+
+      {/* Mesmo botão "View Financial Statement" do app */}
+      <Link
+        href="/dashboard/statement"
+        className="mt-4 flex items-center gap-2 rounded-xl bg-kinko px-4 py-3.5 text-white transition hover:bg-kinko-dark"
+      >
+        <ReceiptLong className="size-5" />
+        <span className="flex-1 text-center font-semibold">Ver extrato completo</span>
+        <span aria-hidden className="text-lg">›</span>
+      </Link>
     </div>
   );
 }

@@ -18,8 +18,23 @@ O navegador nunca fala direto com o Rails. O Next.js atua como **BFF (backend-fo
 
 | Rota | Descrição |
 | --- | --- |
-| `/login` | Formulário de login (e-mail/senha) |
-| `/dashboard` | Saldo (ledger), entradas/saídas 30 dias, gráfico 7/14/30 dias, movimentações do mês |
+| `/login` | Login (e-mail/senha) |
+| `/register` | Cadastro de pessoa física ou empresa (`POST /api/v1/auth/register`) |
+| `/dashboard` | Saldo, entradas/saídas 30 dias, gráfico 7/14/30 dias, últimas movimentações |
+| `/dashboard/statement?month=YYYY-MM` | Extrato mensal agrupado por dia, com totais e navegação entre meses |
+| `/dashboard/transfer` | Transferência para outra conta (UUID); mostra o número da sua conta para copiar |
+| `/dashboard/deposit` | Depósito com cartão via Stripe Payment Element |
+
+### Depósito (Stripe)
+
+1. O servidor Next chama `POST /api/v1/deposits`, e o Rails cria o PaymentIntent.
+2. O navegador confirma o cartão com o Payment Element (`@stripe/react-stripe-js`).
+3. O **crédito no ledger só acontece no webhook** `payment_intent.succeeded` do backend. A tela avisa que o saldo
+   atualiza quando o Stripe confirmar.
+
+Requer `STRIPE_PUBLISHABLE_KEY` no frontend e `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` no backend.
+Em desenvolvimento, encaminhe os webhooks com
+`stripe listen --forward-to localhost:3000/api/v1/webhooks/stripe`.
 
 ## Rodando localmente
 

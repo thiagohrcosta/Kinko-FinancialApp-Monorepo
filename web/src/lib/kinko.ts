@@ -54,3 +54,50 @@ export function getTransactions(month?: string) {
 export function getInsights(range: InsightRange) {
   return authFetch<Insights>(`/api/v1/accounts/insights?range=${range}`);
 }
+
+export type Account = { uuid: string; balance: number; status: string };
+
+export type RegisterPayload = {
+  email: string;
+  password: string;
+  password_confirmation: string;
+  full_name: string;
+  user_type: "individual" | "business";
+  business_name?: string;
+  business_sector?: string;
+  document_number?: string;
+  phone_number?: string;
+  address_zip_code: string;
+  address_street: string;
+  address_number: string;
+  address_complement?: string;
+  address_neighborhood: string;
+  address_city: string;
+  address_state: string;
+};
+
+export function register(payload: RegisterPayload) {
+  return publicFetch<LoginResponse>("/api/v1/auth/register", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getPrimaryAccount(): Promise<Account | null> {
+  const accounts = await authFetch<Account[]>("/api/v1/accounts");
+  return accounts[0] ?? null;
+}
+
+export function createTransfer(input: { destination_account_uuid: string; amount_cents: number; description?: string }) {
+  return authFetch<{ message: string; transaction_id: string }>("/api/v1/transfers", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function createDeposit(amount_cents: number) {
+  return authFetch<{ payment_intent_id: string; client_secret: string }>("/api/v1/deposits", {
+    method: "POST",
+    body: JSON.stringify({ amount_cents }),
+  });
+}

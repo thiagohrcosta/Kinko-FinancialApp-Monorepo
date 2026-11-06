@@ -33,12 +33,12 @@ export default function DashboardPage({ searchParams }: PageProps<"/dashboard">)
       </Suspense>
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <section className="lg:col-span-3">
+        <section className="min-w-0 lg:col-span-3">
           <Suspense fallback={<CardSkeleton className="h-80" />}>
             <InsightsChart searchParams={searchParams} />
           </Suspense>
         </section>
-        <section className="lg:col-span-2">
+        <section className="min-w-0 lg:col-span-2">
           <Suspense fallback={<CardSkeleton className="h-80" />}>
             <RecentTransactions />
           </Suspense>
