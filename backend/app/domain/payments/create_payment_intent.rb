@@ -3,8 +3,8 @@ module Payments
     def call(account_uuid:, amount_cents:)
       intent = Stripe::PaymentIntent.create(
         amount: amount_cents,
-        currency: "usd",
-        payment_method_types: ["card"],
+        currency: Accounts::Money::DEFAULT_CURRENCY.downcase,
+        payment_method_types: [ "card" ],
         metadata: {
           account_uuid: account_uuid
         }

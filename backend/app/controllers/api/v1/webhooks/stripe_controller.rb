@@ -36,12 +36,16 @@ class Api::V1::Webhooks::StripeController < ApplicationController
       end
     end
 
-    # Verifica se o evento já foi processado (idempotência)
-    return head :ok unless WebhookEvent.process_once(event.id)
+    # Claiming the event and applying it share one transaction: a redelivery
+    # is ignored, and if processing raises, the claim is rolled back and the
+    # 500 makes Stripe retry it (#11).
+    ActiveRecord::Base.transaction do
+      next unless WebhookEvent.process_once(event.id)
 
-    case event.type
-    when "payment_intent.succeeded"
-      handle_success(event.data.object)
+      case event.type
+      when "payment_intent.succeeded"
+        handle_success(event.data.object)
+      end
     end
 
     head :ok
@@ -71,14 +75,19 @@ class Api::V1::Webhooks::StripeController < ApplicationController
     )
 
     payment_intent_id = payment_intent.is_a?(Hash) ? payment_intent["id"] : payment_intent.id
+    currency = payment_intent["currency"]
 
     service.call(
       account_uuid: account_uuid,
       amount_cents: amount_cents,
-      reference: payment_intent_id
+      reference: payment_intent_id,
+      currency: currency.presence || Accounts::Money::DEFAULT_CURRENCY
     )
   rescue ActiveRecord::RecordNotFound => e
     Rails.logger.error("Account not found: #{account_uuid}")
+  rescue Accounts::CurrencyMismatch
+    # Permanent failure: retrying would never succeed, so do not raise.
+    Rails.logger.error("Currency mismatch for #{payment_intent_id}: #{currency}")
   rescue StandardError => e
     Rails.logger.error("Error in handle_success: #{e.class} - #{e.message}")
     Rails.logger.error(e.backtrace.first(10).join("\n"))

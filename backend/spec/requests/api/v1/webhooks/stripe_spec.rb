@@ -33,7 +33,41 @@ RSpec.describe "Api::V1::Webhooks::Stripe", type: :request do
     expect(entry.reference).to eq("pi_123")
   end
 
-  # Redelivery idempotency is tracked in #11 (WebhookEvent.process_once).
+  it "ignores a redelivered event (idempotency, #11)" do
+    deliver(event)
+    deliver(event)
+
+    expect(response).to have_http_status(:ok)
+    expect(account.ledger_entries.count).to eq(1)
+  end
+
+  it "does not lose the event when processing fails, so Stripe's retry credits it" do
+    calls = 0
+    allow_any_instance_of(Payments::DepositService).to receive(:call).and_wrap_original do |original, **kwargs|
+      calls += 1
+      raise "transient failure" if calls == 1
+
+      original.call(**kwargs)
+    end
+
+    expect { deliver(event) }.to raise_error(RuntimeError, "transient failure")
+    expect(WebhookEvent.where(event_id: "evt_123")).not_to exist
+    expect(account.ledger_entries.count).to eq(0)
+
+    deliver(event)
+
+    expect(response).to have_http_status(:ok)
+    expect(account.ledger_entries.count).to eq(1)
+  end
+
+  it "does not credit a payment in a different currency" do
+    event[:data][:object][:currency] = "eur"
+
+    deliver(event)
+
+    expect(response).to have_http_status(:ok)
+    expect(account.ledger_entries.count).to eq(0)
+  end
 
   it "rejects an invalid signature outside development" do
     allow(Stripe::Webhook).to receive(:construct_event)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_06_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_06_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -19,8 +19,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_120000) do
     t.string "status"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.string "uuid"
+    t.string "uuid", null: false
     t.index ["user_id"], name: "index_accounts_on_user_id"
+    t.index ["uuid"], name: "index_accounts_on_uuid", unique: true
   end
 
   create_table "ledger_entries", force: :cascade do |t|
@@ -33,8 +34,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_120000) do
     t.string "reference"
     t.string "transaction_id"
     t.datetime "updated_at", null: false
+    t.index ["account_id", "reference"], name: "index_ledger_entries_on_account_and_reference", unique: true, where: "(reference IS NOT NULL)"
+    t.index ["account_id", "transaction_id"], name: "index_ledger_entries_on_account_and_transaction_id", unique: true, where: "(transaction_id IS NOT NULL)"
     t.index ["account_id"], name: "index_ledger_entries_on_account_id"
     t.index ["transaction_id"], name: "index_ledger_entries_on_transaction_id"
+    t.check_constraint "amount_cents > 0", name: "ledger_entries_amount_positive"
+    t.check_constraint "entry_type::text = ANY (ARRAY['credit'::character varying, 'debit'::character varying]::text[])", name: "ledger_entries_entry_type_valid"
   end
 
   create_table "solid_cable_messages", force: :cascade do |t|

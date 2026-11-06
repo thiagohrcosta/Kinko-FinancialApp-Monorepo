@@ -16,6 +16,33 @@ class AccountRepository
     Accounts::Account.new(record.uuid, entries)
   end
 
+  # Runs a balance-changing operation atomically:
+  #   1. locks the account rows (SELECT ... FOR UPDATE), always in id order
+  #      so two operations on the same pair of accounts cannot deadlock;
+  #   2. loads the domain accounts only after the lock, so the balance seen
+  #      by `debit!` cannot be changed by a concurrent request;
+  #   3. yields them, then persists every new entry in the same transaction.
+  #
+  # Usage:
+  #   AccountRepository.with_locked(from_uuid, to_uuid) do |from, to|
+  #     from.debit!(money)
+  #     to.credit!(money)
+  #   end
+  def self.with_locked(*uuids)
+    uuids = uuids.flatten
+
+    ActiveRecord::Base.transaction do
+      locked = Account.where(uuid: uuids.uniq).order(:id).lock.to_a
+      missing = uuids.uniq - locked.map(&:uuid)
+      raise ActiveRecord::RecordNotFound, "Account not found: #{missing.join(', ')}" if missing.any?
+
+      accounts = uuids.map { |uuid| load(uuid) }
+      result = yield(*accounts)
+      accounts.each { |account| save(account) }
+      result
+    end
+  end
+
   # The ledger is append-only: only new entries are written; existing
   # entries are never updated or deleted.
   def self.save(domain_account)

@@ -3,10 +3,11 @@ require_relative "errors"
 
 module Accounts
   class Account
-    attr_reader :uuid
+    attr_reader :uuid, :currency
 
-    def initialize(uuid, persisted_entries = [])
+    def initialize(uuid, persisted_entries = [], currency: Money::DEFAULT_CURRENCY)
       @uuid = uuid
+      @currency = currency
       @persisted_entries = persisted_entries
       @new_entries = []
     end
@@ -58,6 +59,9 @@ module Accounts
 
     def validate_amount!(money)
       raise InvalidAmount unless money.positive?
+      # The balance is a plain sum of entries, so mixing currencies would
+      # silently corrupt it.
+      raise CurrencyMismatch unless money.currency == currency
     end
 
     def insufficient?(money)
