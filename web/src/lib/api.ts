@@ -8,7 +8,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
-    /** Mensagens individuais de validação do Rails (`errors: [...]`), quando houver. */
+    /** Individual Rails validation messages (`errors: [...]`), when present. */
     public errors: string[] = [],
   ) {
     super(message);
@@ -24,12 +24,12 @@ async function toApiError(res: Response): Promise<ApiError> {
       return new ApiError(errors.join("; "), res.status, errors);
     }
   } catch {
-    // corpo não-JSON
+    // non-JSON body
   }
   return new ApiError(`Request failed with status ${res.status}`, res.status);
 }
 
-/** Chamada sem autenticação (login, registro). */
+/** Unauthenticated call (login, sign-up). */
 export async function publicFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
@@ -41,8 +41,8 @@ export async function publicFetch<T>(path: string, init?: RequestInit): Promise<
 }
 
 /**
- * Chamada autenticada ao Rails usando o JWT guardado no cookie httpOnly.
- * Se o token estiver ausente/expirado, encerra a sessão e manda para o login.
+ * Authenticated call to Rails using the JWT stored in the httpOnly cookie.
+ * A missing/expired token ends the session and sends the user to login.
  */
 export async function authFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const token = await getToken();
@@ -59,7 +59,7 @@ export async function authFetch<T>(path: string, init?: RequestInit): Promise<T>
     cache: "no-store",
   });
 
-  // Componentes de servidor não podem apagar cookies; o route handler faz isso.
+  // Server Components can't delete cookies; the route handler does it.
   if (res.status === 401) redirect("/auth/logout?expired=1");
   if (!res.ok) throw await toApiError(res);
   return res.json() as Promise<T>;

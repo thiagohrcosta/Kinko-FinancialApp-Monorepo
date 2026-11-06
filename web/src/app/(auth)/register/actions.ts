@@ -13,27 +13,19 @@ const FIELDS = [
   "address_complement", "address_neighborhood", "address_city", "address_state",
 ] as const;
 
-// Traduz as mensagens mais comuns do Rails/Devise; as demais seguem como vieram.
-const TRANSLATIONS: Record<string, string> = {
-  "Email has already been taken": "Este e-mail já está cadastrado.",
-  "Email is invalid": "E-mail inválido.",
-  "Password is too short (minimum is 6 characters)": "A senha precisa ter pelo menos 6 caracteres.",
-  "Password confirmation doesn't match Password": "A confirmação não confere com a senha.",
-};
-
 export async function register(_prev: RegisterState, formData: FormData): Promise<RegisterState> {
   const values = Object.fromEntries(
     FIELDS.map((f) => [f, String(formData.get(f) ?? "").trim()]),
   ) as Record<(typeof FIELDS)[number], string>;
   values.email = values.email.toLowerCase();
-  // Não devolvemos senhas para o formulário
+  // Never echo passwords back into the form
   const echo = { ...values, password: "", password_confirmation: "" };
 
   const errors: string[] = [];
-  if (values.password.length < 6) errors.push(TRANSLATIONS["Password is too short (minimum is 6 characters)"]);
-  if (values.password !== values.password_confirmation) errors.push(TRANSLATIONS["Password confirmation doesn't match Password"]);
+  if (values.password.length < 6) errors.push("Password must be at least 6 characters.");
+  if (values.password !== values.password_confirmation) errors.push("Password confirmation doesn't match.");
   if (values.user_type === "business" && (!values.business_name || !values.business_sector)) {
-    errors.push("Informe o nome e o setor da empresa.");
+    errors.push("Enter the business name and industry.");
   }
   if (errors.length) return { errors, values: echo };
 
@@ -52,11 +44,11 @@ export async function register(_prev: RegisterState, formData: FormData): Promis
   } catch (err) {
     unstable_rethrow(err);
     if (err instanceof ApiError && err.status === 422) {
-      const messages = err.errors.length ? err.errors : [err.message];
-      return { errors: messages.map((m) => TRANSLATIONS[m] ?? m), values: echo };
+      // Rails validation messages are already user-facing English sentences
+      return { errors: err.errors.length ? err.errors : [err.message], values: echo };
     }
     console.error("Register failed:", err);
-    return { errors: ["Não foi possível conectar ao servidor. Tente novamente."], values: echo };
+    return { errors: ["We couldn't reach the server. Please try again."], values: echo };
   }
 
   redirect("/dashboard");

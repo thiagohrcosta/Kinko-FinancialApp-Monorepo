@@ -17,8 +17,8 @@ class User < ApplicationRecord
   validates :business_sector, presence: true, if: :business?
   validates :address_street, presence: true
   validates :address_number, presence: true
-  # Só em novos cadastros: usuários antigos podem não ter bairro e precisam
-  # continuar salvando (ex.: reset de senha do Devise).
+  # Sign-up only: legacy users may have no neighborhood and must still be
+  # saveable (e.g. Devise password reset).
   validates :address_neighborhood, presence: true, on: :create
   validates :address_city, presence: true
   validates :address_state, presence: true

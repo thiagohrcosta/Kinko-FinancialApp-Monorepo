@@ -4,16 +4,16 @@ import { AccountCard } from "../_components/account-card";
 import { CardSkeleton } from "../_components/skeleton";
 import { TransferForm } from "./transfer-form";
 
-export const metadata: Metadata = { title: "Transferir · Kinko" };
+export const metadata: Metadata = { title: "Transfer · Kinko" };
 
 export default function TransferPage() {
   return (
     <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-5">
       <div className="min-w-0 space-y-4 md:col-span-2">
-        <h1 className="text-xl font-bold">Transferir</h1>
+        <h1 className="text-xl font-bold">Transfer</h1>
         <p className="text-sm text-muted">
-          Envie dinheiro para outra conta Kinko usando o número da conta. As duas pernas da transferência são
-          registradas no ledger com o mesmo ID de transação.
+          Send money to another Kinko account using its account number. Both legs of the transfer are recorded in
+          the ledger under the same transaction ID.
         </p>
         <Suspense fallback={<CardSkeleton className="h-40" />}>
           <AccountCard />

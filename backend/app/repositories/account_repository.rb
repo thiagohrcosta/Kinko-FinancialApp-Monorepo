@@ -16,8 +16,8 @@ class AccountRepository
     Accounts::Account.new(record.uuid, entries)
   end
 
-  # O ledger é append-only: só os lançamentos novos são gravados,
-  # os existentes nunca são alterados nem removidos.
+  # The ledger is append-only: only new entries are written; existing
+  # entries are never updated or deleted.
   def self.save(domain_account)
     record = Account.find_by!(uuid: domain_account.uuid)
 

@@ -8,7 +8,7 @@ import { formatCurrency } from "@/lib/format";
 import { validateDepositAmount } from "@/lib/deposit-rules";
 import { startDeposit } from "./actions";
 
-// Payment Element com a identidade do Kinko
+// Payment Element styled with the Kinko brand
 const appearance: Appearance = {
   theme: "stripe",
   variables: {
@@ -36,7 +36,7 @@ export function DepositFlow({ publishableKey }: { publishableKey: string }) {
     return (
       <div className="card space-y-4 p-5">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted">Valor do depósito</p>
+          <p className="text-sm text-muted">Deposit amount</p>
           <p className="text-xl font-bold tabular-nums">{formatCurrency(intent.amountCents / 100)}</p>
         </div>
         <Elements stripe={stripe} options={{ clientSecret: intent.clientSecret, appearance }}>
@@ -62,8 +62,8 @@ export function DepositFlow({ publishableKey }: { publishableKey: string }) {
           return;
         }
         startTransition(async () => {
-          // Carrega o Stripe.js só quando necessário e antes de criar o PaymentIntent,
-          // para não deixar pagamentos órfãos se o script estiver bloqueado.
+          // Load Stripe.js on demand and before creating the PaymentIntent, so a blocked
+          // script doesn't leave orphaned payments behind.
           let instance = stripe;
           if (!instance) {
             try {
@@ -72,7 +72,7 @@ export function DepositFlow({ publishableKey }: { publishableKey: string }) {
               instance = null;
             }
             if (!instance) {
-              setError("Não foi possível carregar o Stripe. Verifique sua conexão ou bloqueadores de anúncio.");
+              setError("We couldn't load Stripe. Check your connection or ad blocker.");
               return;
             }
             setStripe(instance);
@@ -86,7 +86,7 @@ export function DepositFlow({ publishableKey }: { publishableKey: string }) {
     >
       <div>
         <label htmlFor="amount" className="field-label">
-          Quanto você quer depositar? (USD)
+          How much do you want to deposit? (USD)
         </label>
         <div className="relative">
           <span className="pointer-events-none absolute inset-y-0 left-3 grid place-items-center text-muted">$</span>
@@ -123,7 +123,7 @@ export function DepositFlow({ publishableKey }: { publishableKey: string }) {
       )}
 
       <button type="submit" disabled={pending} className="btn-kinko w-full">
-        {pending ? "Preparando pagamento…" : "Continuar para o pagamento"}
+        {pending ? "Preparing payment…" : "Continue to payment"}
       </button>
     </form>
   );
@@ -151,18 +151,18 @@ function PaymentStep({
 
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
-      // Só redireciona quando o método exige (ex.: 3D Secure); volta para esta página.
+      // Only redirects when the method requires it (e.g. 3D Secure); returns to this page.
       redirect: "if_required",
       confirmParams: { return_url: `${window.location.origin}/dashboard/deposit` },
     });
 
     if (error) {
-      setError(error.message ?? "Pagamento não aprovado.");
+      setError(error.message ?? "Payment was not approved.");
       setSubmitting(false);
     } else if (paymentIntent?.status === "succeeded" || paymentIntent?.status === "processing") {
       onSuccess();
     } else {
-      setError("Pagamento não concluído. Tente novamente.");
+      setError("Payment was not completed. Please try again.");
       setSubmitting(false);
     }
   }
@@ -176,10 +176,10 @@ function PaymentStep({
         </p>
       )}
       <button type="submit" disabled={!stripe || submitting} className="btn-kinko w-full">
-        {submitting ? "Processando…" : `Pagar ${formatCurrency(amountCents / 100)}`}
+        {submitting ? "Processing…" : `Pay ${formatCurrency(amountCents / 100)}`}
       </button>
       <button type="button" onClick={onCancel} disabled={submitting} className="btn-ghost w-full">
-        Alterar valor
+        Change amount
       </button>
     </form>
   );
@@ -191,15 +191,15 @@ export function DepositSuccess({ amountCents }: { amountCents?: number }) {
       <span className="mx-auto grid size-14 place-items-center rounded-full bg-credit/12 text-2xl text-credit" aria-hidden>
         ✓
       </span>
-      <h2 className="mt-3 text-lg font-bold">Pagamento aprovado</h2>
+      <h2 className="mt-3 text-lg font-bold">Payment approved</h2>
       {amountCents !== undefined && (
         <p className="mt-1 text-2xl font-bold tabular-nums">{formatCurrency(amountCents / 100)}</p>
       )}
       <p className="mx-auto mt-2 max-w-sm text-sm text-muted">
-        O valor é creditado no seu saldo assim que o Stripe confirmar o pagamento (normalmente em poucos segundos).
+        The amount is added to your balance as soon as Stripe confirms the payment (usually within a few seconds).
       </p>
       <Link href="/dashboard" className="btn-outline mt-5">
-        Voltar para a visão geral
+        Back to overview
       </Link>
     </div>
   );

@@ -15,7 +15,7 @@ async function UserMenu() {
       </div>
       <form action={logout}>
         <button type="submit" className="btn-ghost">
-          Sair
+          Log out
         </button>
       </form>
     </div>
@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: LayoutProps<"/dashboard">)
     <div className="flex min-h-full flex-1 flex-col">
       <header className="sticky top-0 z-20 bg-white shadow-[0_1px_0_rgba(0,0,0,0.06)]">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
-          <Link href="/dashboard" aria-label="Kinko — início">
+          <Link href="/dashboard" aria-label="Kinko — home">
             <Logo />
           </Link>
           <Suspense fallback={<div className="h-9 w-32 animate-pulse rounded-lg bg-chip" />}>

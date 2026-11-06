@@ -22,7 +22,7 @@ export function LoginForm() {
         <IconBubble>
           <span className="size-2 rounded-full bg-current" />
         </IconBubble>
-        <span className="sr-only">E-mail</span>
+        <span className="sr-only">Email</span>
         <input
           id="email"
           name="email"
@@ -30,7 +30,7 @@ export function LoginForm() {
           autoComplete="email"
           required
           defaultValue={state.email}
-          placeholder="E-mail"
+          placeholder="Email"
           className="h-[42px] flex-1 bg-transparent px-1.5 text-[#1e1e1e] placeholder:text-[#7a7a7a] focus:outline-none"
         />
       </label>
@@ -43,14 +43,14 @@ export function LoginForm() {
             <path d="M5 7V5a3 3 0 1 1 6 0v2h.5A1.5 1.5 0 0 1 13 8.5v5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 13.5v-5A1.5 1.5 0 0 1 4.5 7H5Zm1.5 0h3V5a1.5 1.5 0 0 0-3 0v2Z" />
           </svg>
         </IconBubble>
-        <span className="sr-only">Senha</span>
+        <span className="sr-only">Password</span>
         <input
           id="password"
           name="password"
           type="password"
           autoComplete="current-password"
           required
-          placeholder="Senha"
+          placeholder="Password"
           className="h-[42px] flex-1 bg-transparent px-1.5 text-[#1e1e1e] placeholder:text-[#7a7a7a] focus:outline-none"
         />
         <span className="text-lg text-[#b7b0b0]" aria-hidden>
@@ -65,7 +65,7 @@ export function LoginForm() {
       )}
 
       <button type="submit" disabled={pending} className="btn-kinko mt-4 w-full">
-        {pending ? "Entrando…" : "Entrar"}
+        {pending ? "Logging in…" : "Log In"}
       </button>
     </form>
   );

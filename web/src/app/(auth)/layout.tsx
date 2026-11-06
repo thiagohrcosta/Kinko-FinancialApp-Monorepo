@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-// Fundo compartilhado por login e cadastro — mesma arte da tela de login do app mobile.
+// Shared by login and sign-up — same artwork as the mobile app's login screen.
 export default function AuthLayout({ children }: LayoutProps<"/">) {
   return (
     <main className="relative flex flex-1 overflow-hidden">

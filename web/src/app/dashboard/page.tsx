@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Dashboard · Kinko" };
 
 async function Welcome() {
   const user = await getSessionUser();
-  return <h1 className="text-xl font-bold">Bem-vindo de volta, {user?.fullName ?? "usuário"}</h1>;
+  return <h1 className="text-xl font-bold">Welcome back, {user?.fullName ?? "there"}</h1>;
 }
 
 export default function DashboardPage({ searchParams }: PageProps<"/dashboard">) {

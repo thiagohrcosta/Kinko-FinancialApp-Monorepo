@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 import "./globals.css";
 
-// Mesma fonte do app mobile (@expo-google-fonts/roboto 400/700)
+// Same font as the mobile app (@expo-google-fonts/roboto 400/700)
 const roboto = Roboto({
   variable: "--font-roboto",
   subsets: ["latin"],
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pt-BR" className={`${roboto.variable} h-full antialiased`}>
+    <html lang="en" className={`${roboto.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

@@ -1,4 +1,4 @@
-// Equivalentes SVG dos MaterialIcons usados no app mobile.
+// SVG equivalents of the MaterialIcons used in the mobile app.
 type P = { className?: string };
 
 export const ArrowDownward = ({ className }: P) => (

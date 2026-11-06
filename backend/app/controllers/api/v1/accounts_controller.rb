@@ -126,7 +126,7 @@ module Api
         nil
       end
 
-      # A outra perna de cada movimentação (mesmo transaction_id), carregada numa única query.
+      # The other leg of each movement (same transaction_id), loaded in a single query.
       def counterparty_entries_for(entries)
         entries_by_tx = entries.select { |e| e.transaction_id.present? }.index_by(&:id)
         tx_ids = entries_by_tx.values.map(&:transaction_id).uniq

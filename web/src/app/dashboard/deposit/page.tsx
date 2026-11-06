@@ -3,23 +3,23 @@ import { Suspense } from "react";
 import { CardSkeleton } from "../_components/skeleton";
 import { DepositFlow, DepositSuccess } from "./deposit-flow";
 
-export const metadata: Metadata = { title: "Depositar · Kinko" };
+export const metadata: Metadata = { title: "Deposit · Kinko" };
 
 async function DepositContent({ searchParams }: { searchParams: PageProps<"/dashboard/deposit">["searchParams"] }) {
   const params = await searchParams;
 
-  // Retorno de um redirect do Stripe (ex.: 3D Secure)
+  // Return from a Stripe redirect (e.g. 3D Secure)
   if (params.redirect_status === "succeeded") return <DepositSuccess />;
 
-  // Lida em tempo de requisição (depois do await acima), não no build.
+  // Read at request time (after the await above), not at build time.
   const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
   if (!publishableKey) {
     return (
       <div className="card p-5 text-sm">
-        <p className="font-bold text-kinko">Depósito com cartão não configurado</p>
+        <p className="font-bold text-kinko">Card deposits are not configured</p>
         <p className="mt-1 text-muted">
-          Defina <code className="rounded bg-chip px-1">STRIPE_PUBLISHABLE_KEY</code> no ambiente do frontend (a mesma
-          conta Stripe do <code className="rounded bg-chip px-1">STRIPE_SECRET_KEY</code> do backend).
+          Set <code className="rounded bg-chip px-1">STRIPE_PUBLISHABLE_KEY</code> in the frontend environment (same
+          Stripe account as the backend&apos;s <code className="rounded bg-chip px-1">STRIPE_SECRET_KEY</code>).
         </p>
       </div>
     );
@@ -29,7 +29,7 @@ async function DepositContent({ searchParams }: { searchParams: PageProps<"/dash
     <>
       {params.redirect_status === "failed" && (
         <p role="alert" className="mb-4 rounded-xl bg-[#FFF5F5] px-3 py-2 text-sm text-kinko">
-          O pagamento não foi aprovado. Tente novamente.
+          The payment was not approved. Please try again.
         </p>
       )}
       <DepositFlow publishableKey={publishableKey} />
@@ -41,14 +41,14 @@ export default function DepositPage({ searchParams }: PageProps<"/dashboard/depo
   return (
     <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-5">
       <div className="min-w-0 space-y-3 md:col-span-2">
-        <h1 className="text-xl font-bold">Depositar</h1>
+        <h1 className="text-xl font-bold">Deposit</h1>
         <p className="text-sm text-muted">
-          Adicione saldo com cartão via Stripe. O Kinko só registra o crédito no ledger depois que o Stripe confirma o
-          pagamento pelo webhook — nunca a partir do navegador.
+          Add funds with a card through Stripe. Kinko only credits the ledger after Stripe confirms the payment via
+          webhook — never from the browser.
         </p>
         <p className="text-xs text-subtle">
-          Em modo de teste, use o cartão <span className="font-mono">4242 4242 4242 4242</span>, qualquer data futura e
-          qualquer CVC.
+          In test mode, use card <span className="font-mono">4242 4242 4242 4242</span> with any future date and any
+          CVC.
         </p>
       </div>
       <div className="min-w-0 md:col-span-3 md:pt-11">

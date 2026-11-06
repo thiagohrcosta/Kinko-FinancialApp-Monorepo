@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-// Checagem otimista (só presença do cookie). A validação real do token
-// acontece no Rails a cada chamada feita por src/lib/api.ts.
+// Optimistic check (cookie presence only). The token is actually validated
+// by Rails on every call made through src/lib/api.ts.
 const TOKEN_COOKIE = "kinko_token";
 
 export function proxy(request: NextRequest) {

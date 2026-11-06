@@ -1,33 +1,33 @@
 @import "tailwindcss";
 
 /*
- * Paleta oficial do Kinko — extraída do logo (kinko-mobile/assets/images/logo.png)
- * e dos estilos do app mobile (kinko-mobile/app/**).
+ * Official Kinko palette — taken from the logo (kinko-mobile/assets/images/logo.png)
+ * and the mobile app styles (kinko-mobile/app/**).
  */
 @theme inline {
   --font-sans: var(--font-roboto);
 
-  /* Marca */
-  --color-kinko-logo: #f52f35; /* quadrado do "K" no logo */
-  --color-kinko: #d01c1c; /* vermelho principal (título "Kinko!", botões, loaders) */
-  --color-kinko-light: #ff3b3b; /* início do gradiente do botão de login */
-  --color-kinko-dark: #b30000; /* fim do gradiente do botão de login */
-  --color-kinko-accent: #ff3b30; /* filtros ativos, botões secundários, linha de despesas */
-  --color-kinko-link: #c02a2a; /* links ("Forgot password?") */
+  /* Brand */
+  --color-kinko-logo: #f52f35; /* the "K" square in the logo */
+  --color-kinko: #d01c1c; /* primary red ("Kinko!" title, buttons, loaders) */
+  --color-kinko-light: #ff3b3b; /* login button gradient start */
+  --color-kinko-dark: #b30000; /* login button gradient end */
+  --color-kinko-accent: #ff3b30; /* active filters, secondary buttons, expenses line */
+  --color-kinko-link: #c02a2a; /* links */
 
-  /* Texto e superfícies */
-  --color-ink: #1f212a; /* "KINKO" no logo */
+  /* Text and surfaces */
+  --color-ink: #1f212a; /* "KINKO" wordmark */
   --color-ink-soft: #2c2c2c;
   --color-muted: #888888;
   --color-subtle: #999999;
-  --color-surface: #f5f5f5; /* fundo das telas */
-  --color-chip: #eeeeee; /* filtros inativos */
+  --color-surface: #f5f5f5; /* screen background */
+  --color-chip: #eeeeee; /* inactive filters */
 
-  /* Semânticas financeiras */
-  --color-income: #57a773; /* linha de entradas no gráfico */
-  --color-credit: #16a34a; /* valores de crédito no extrato */
-  --color-debit: #dc2626; /* valores de débito no extrato */
-  --color-expense: #ff3b30; /* linha de saídas no gráfico */
+  /* Financial semantics */
+  --color-income: #57a773; /* income line in the chart */
+  --color-credit: #16a34a; /* credit amounts in the statement */
+  --color-debit: #dc2626; /* debit amounts in the statement */
+  --color-expense: #ff3b30; /* expenses line in the chart */
 }
 
 body {
@@ -35,11 +35,11 @@ body {
 }
 
 @layer components {
-  /* Cards brancos com sombra suave, como no app (borderRadius 12, shadowOpacity ~0.08) */
+  /* White cards with a soft shadow, as in the app (borderRadius 12, shadowOpacity ~0.08) */
   .card {
     @apply rounded-xl bg-white shadow-[0_2px_6px_rgba(0,0,0,0.08)];
   }
-  /* Card translúcido da tela de login do app (rgba(255,255,255,0.75), radius 22) */
+  /* Frosted card from the app's login screen (rgba(255,255,255,0.75), radius 22) */
   .glass-card {
     @apply rounded-[22px] border border-white/40 bg-white/75 p-5 shadow-[0_10px_20px_rgba(0,0,0,0.25)] backdrop-blur-sm;
   }

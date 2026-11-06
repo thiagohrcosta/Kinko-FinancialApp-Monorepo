@@ -2,7 +2,7 @@ import type { Transaction } from "@/lib/kinko";
 import { formatCurrency } from "@/lib/format";
 import { ArrowDownward, ArrowUpward } from "./icons";
 
-/** Linha do extrato no padrão do app: círculo com a cor a 12%, verde crédito / vermelho débito. */
+/** Statement row in the app's style: 12% tinted circle, green credit / red debit. */
 export function TransactionRow({ tx, meta }: { tx: Transaction; meta: string }) {
   const isCredit = tx.entry_type === "credit";
   const Icon = isCredit ? ArrowDownward : ArrowUpward;

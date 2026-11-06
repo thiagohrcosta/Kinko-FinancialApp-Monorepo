@@ -8,7 +8,7 @@ import { transfer, type TransferState } from "./actions";
 const initialState: TransferState = { status: "idle" };
 
 export function TransferForm() {
-  // Trocar a key remonta o formulário com estado limpo ("Nova transferência")
+  // Changing the key remounts the form with a clean state ("New transfer")
   const [round, setRound] = useState(0);
   return <TransferFormInner key={round} onReset={() => setRound((r) => r + 1)} />;
 }
@@ -22,16 +22,16 @@ function TransferFormInner({ onReset }: { onReset: () => void }) {
         <span className="mx-auto grid size-14 place-items-center rounded-full bg-credit/12 text-2xl text-credit" aria-hidden>
           ✓
         </span>
-        <h2 className="mt-3 text-lg font-bold">Transferência realizada</h2>
+        <h2 className="mt-3 text-lg font-bold">Transfer complete</h2>
         <p className="mt-1 text-2xl font-bold tabular-nums">{formatCurrency(state.amountCents / 100)}</p>
-        <p className="mt-1 break-all text-xs text-subtle">para {state.destination}</p>
-        <p className="mt-3 break-all text-[11px] text-subtle">ID da transação: {state.transactionId}</p>
+        <p className="mt-1 break-all text-xs text-subtle">to {state.destination}</p>
+        <p className="mt-3 break-all text-[11px] text-subtle">Transaction ID: {state.transactionId}</p>
         <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
           <Link href="/dashboard/statement" className="btn-outline">
-            Ver no extrato
+            View in statement
           </Link>
           <button type="button" onClick={onReset} className="btn-outline">
-            Nova transferência
+            New transfer
           </button>
         </div>
       </div>
@@ -44,7 +44,7 @@ function TransferFormInner({ onReset }: { onReset: () => void }) {
     <form action={formAction} className="card space-y-4 p-5">
       <div>
         <label htmlFor="destination" className="field-label">
-          Conta de destino
+          Destination account
         </label>
         <input
           id="destination"
@@ -59,7 +59,7 @@ function TransferFormInner({ onReset }: { onReset: () => void }) {
       </div>
       <div>
         <label htmlFor="amount" className="field-label">
-          Valor (USD)
+          Amount (USD)
         </label>
         <div className="relative">
           <span className="pointer-events-none absolute inset-y-0 left-3 grid place-items-center text-sm text-muted">$</span>
@@ -76,9 +76,9 @@ function TransferFormInner({ onReset }: { onReset: () => void }) {
       </div>
       <div>
         <label htmlFor="description" className="field-label">
-          Descrição <span className="font-normal text-subtle">(opcional)</span>
+          Description <span className="font-normal text-subtle">(optional)</span>
         </label>
-        <input id="description" name="description" maxLength={80} defaultValue={v?.description} placeholder="Ex.: Jantar" className="field" />
+        <input id="description" name="description" maxLength={80} defaultValue={v?.description} placeholder="e.g. Dinner" className="field" />
       </div>
 
       {state.status === "error" && (
@@ -88,7 +88,7 @@ function TransferFormInner({ onReset }: { onReset: () => void }) {
       )}
 
       <button type="submit" disabled={pending} className="btn-kinko w-full">
-        {pending ? "Transferindo…" : "Transferir"}
+        {pending ? "Sending…" : "Send transfer"}
       </button>
     </form>
   );

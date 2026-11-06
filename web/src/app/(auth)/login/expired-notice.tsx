@@ -7,7 +7,7 @@ export async function ExpiredNotice({
   if (!expired) return null;
   return (
     <p className="mb-4 rounded-xl bg-[#FFF5F5] px-3 py-2 text-sm text-kinko">
-      Sua sessão expirou. Entre novamente.
+      Your session has expired. Please log in again.
     </p>
   );
 }

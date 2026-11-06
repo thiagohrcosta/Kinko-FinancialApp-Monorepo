@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export function CopyButton({ value, label = "Copiar" }: { value: string; label?: string }) {
+export function CopyButton({ value, label = "Copy" }: { value: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -13,12 +13,12 @@ export function CopyButton({ value, label = "Copiar" }: { value: string; label?:
           setCopied(true);
           setTimeout(() => setCopied(false), 1500);
         } catch {
-          // clipboard indisponível (http sem permissão): o usuário ainda pode selecionar o texto
+          // Clipboard unavailable (e.g. insecure context): the user can still select the text
         }
       }}
       className="shrink-0 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white transition hover:bg-white/30"
     >
-      {copied ? "Copiado!" : label}
+      {copied ? "Copied!" : label}
     </button>
   );
 }

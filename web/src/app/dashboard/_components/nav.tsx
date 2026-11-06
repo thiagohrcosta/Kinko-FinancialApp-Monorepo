@@ -4,16 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const LINKS = [
-  { href: "/dashboard", label: "Visão geral" },
-  { href: "/dashboard/statement", label: "Extrato" },
-  { href: "/dashboard/transfer", label: "Transferir" },
-  { href: "/dashboard/deposit", label: "Depositar" },
+  { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/statement", label: "Statement" },
+  { href: "/dashboard/transfer", label: "Transfer" },
+  { href: "/dashboard/deposit", label: "Deposit" },
 ] as const;
 
 export function DashboardNav() {
   const pathname = usePathname();
   return (
-    <nav aria-label="Principal" className="-mb-px flex gap-1 overflow-x-auto">
+    <nav aria-label="Main" className="-mb-px flex gap-1 overflow-x-auto">
       {LINKS.map(({ href, label }) => {
         const active = href === "/dashboard" ? pathname === href : pathname.startsWith(href);
         return (

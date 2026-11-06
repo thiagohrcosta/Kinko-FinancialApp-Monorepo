@@ -163,7 +163,7 @@ RSpec.describe Api::V1::AuthController, type: :request do
         }
 
         json = JSON.parse(response.body)
-        expect(json["error"]).to eq("Email ou senha inválidos")
+        expect(json["error"]).to eq("Invalid email or password")
       end
     end
 
@@ -184,7 +184,7 @@ RSpec.describe Api::V1::AuthController, type: :request do
         }
 
         json = JSON.parse(response.body)
-        expect(json["error"]).to eq("Email ou senha inválidos")
+        expect(json["error"]).to eq("Invalid email or password")
       end
     end
 

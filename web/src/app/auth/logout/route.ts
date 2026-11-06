@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { TOKEN_COOKIE, USER_COOKIE } from "@/lib/session";
 
 /**
- * Usado quando o backend rejeita o token (401) durante a renderização:
- * Server Components não podem alterar cookies, então limpamos aqui.
+ * Used when the backend rejects the token (401) during rendering:
+ * Server Components can't modify cookies, so they are cleared here.
  */
 export function GET(request: NextRequest) {
   const url = new URL("/login", request.url);

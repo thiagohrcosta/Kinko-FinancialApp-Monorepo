@@ -1,42 +1,45 @@
 # Kinko Web
 
-Frontend web do Kinko em **Next.js 16** (App Router, Cache Components, Tailwind CSS 4).
+Kinko's web frontend, built with **Next.js 16** (App Router, Cache Components, Tailwind CSS 4).
+The UI is in English and uses US formats (USD, `en-US` dates).
 
-## Arquitetura
+## Architecture
 
-O navegador nunca fala direto com o Rails. O Next.js atua como **BFF (backend-for-frontend)**:
+The browser never talks to Rails directly. Next.js acts as a **BFF (backend-for-frontend)**:
 
-- **Login** (`src/app/login/actions.ts`): Server Action chama `POST /api/v1/auth/login` no Rails e grava o JWT
-  num cookie **httpOnly** (`kinko_token`), inacessível ao JavaScript do browser. Por isso não é preciso CORS no Rails.
-- **Chamadas autenticadas** (`src/lib/api.ts`): `authFetch` lê o cookie no servidor e envia `Authorization: Bearer <jwt>`.
-  Se o Rails responder 401 (token expirado/inválido), o usuário vai para `/auth/logout?expired=1`, que limpa os cookies.
-- **Proxy** (`src/proxy.ts`, antigo "middleware"): redirecionamento otimista — sem cookie, `/dashboard` → `/login`;
-  com cookie, `/login` → `/dashboard`.
-- **Endpoints do backend** ficam tipados em `src/lib/kinko.ts`.
+- **Login** (`src/app/(auth)/login/actions.ts`): a Server Action calls `POST /api/v1/auth/login` and stores the JWT
+  in an **httpOnly** cookie (`kinko_token`) that browser JavaScript can't read. No CORS setup is needed on Rails.
+- **Authenticated calls** (`src/lib/api.ts`): `authFetch` reads the cookie on the server and sends
+  `Authorization: Bearer <jwt>`. If Rails answers 401 (expired/invalid token), the user is sent to
+  `/auth/logout?expired=1`, which clears the cookies. Server Actions rethrow that redirect (`unstable_rethrow`).
+- **Proxy** (`src/proxy.ts`, formerly "middleware"): optimistic redirects — without a cookie `/dashboard` → `/login`;
+  with one, `/login` and `/register` → `/dashboard`.
+- Backend endpoints are typed in `src/lib/kinko.ts`.
 
-## Páginas
+## Pages
 
-| Rota | Descrição |
+| Route | Description |
 | --- | --- |
-| `/login` | Login (e-mail/senha) |
-| `/register` | Cadastro de pessoa física ou empresa (`POST /api/v1/auth/register`) |
-| `/dashboard` | Saldo, entradas/saídas 30 dias, gráfico 7/14/30 dias, últimas movimentações |
-| `/dashboard/statement?month=YYYY-MM` | Extrato mensal agrupado por dia, com totais e navegação entre meses |
-| `/dashboard/transfer` | Transferência para outra conta (UUID); mostra o número da sua conta para copiar |
-| `/dashboard/deposit` | Depósito com cartão via Stripe Payment Element |
+| `/login` | Log in with email and password |
+| `/register` | Personal or business sign-up (`POST /api/v1/auth/register`) |
+| `/dashboard` | Balance, 30-day income/expenses, 7/14/30-day chart, latest transactions |
+| `/dashboard/statement?month=YYYY-MM` | Monthly statement grouped by day, with totals and month navigation |
+| `/dashboard/transfer` | Transfer to another account (UUID); shows your own account number with a copy button |
+| `/dashboard/deposit` | Card deposit through the Stripe Payment Element |
 
-### Depósito (Stripe)
+Dates and times are shown in **UTC** to match how the backend buckets months (see `src/lib/format.ts`).
 
-1. O servidor Next chama `POST /api/v1/deposits`, e o Rails cria o PaymentIntent.
-2. O navegador confirma o cartão com o Payment Element (`@stripe/react-stripe-js`).
-3. O **crédito no ledger só acontece no webhook** `payment_intent.succeeded` do backend. A tela avisa que o saldo
-   atualiza quando o Stripe confirmar.
+### Deposits (Stripe)
 
-Requer `STRIPE_PUBLISHABLE_KEY` no frontend e `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` no backend.
-Em desenvolvimento, encaminhe os webhooks com
-`stripe listen --forward-to localhost:3000/api/v1/webhooks/stripe`.
+1. The Next server calls `POST /api/v1/deposits`; Rails creates the PaymentIntent.
+2. The browser confirms the card with the Payment Element (`@stripe/react-stripe-js`).
+3. **The ledger is only credited by the backend's `payment_intent.succeeded` webhook**, which is idempotent per
+   Stripe event. The page explains that the balance updates once Stripe confirms.
 
-## Rodando localmente
+Requires `STRIPE_PUBLISHABLE_KEY` on the frontend and `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` on the backend.
+In development, forward webhooks with `stripe listen --forward-to localhost:3000/api/v1/webhooks/stripe`.
+
+## Running locally
 
 ```bash
 cp .env.example .env.local   # API_BASE_URL=http://localhost:3000
@@ -44,27 +47,28 @@ npm install
 npm run dev                  # http://localhost:3001
 ```
 
-Checks (os mesmos do CI): `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
+Checks (same as CI): `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
 
-Com Docker, a partir da raiz do monorepo: `docker compose up` (web em `:3001`, backend em `:3000`).
+With Docker, from the monorepo root: `docker compose up` (web on `:3001`, backend on `:3000`).
 
-Usuários de seed (`bin/rails db:seed` no backend) usam a senha `password123`, ex.: `admin@kinko.com`.
+Seed users (`bin/rails db:seed` in the backend) use the password `password123`, e.g. `admin@kinko.com`.
+`bin/rails runner create_user_with_transactions.rb` creates `test_with_balance@kinko.com` with sample entries.
 
-## Identidade visual
+## Visual identity
 
-O tema segue o app mobile e o logo oficial. Os tokens ficam em `src/app/globals.css` (`@theme`) e viram classes do
-Tailwind (`bg-kinko`, `text-income`, …):
+The theme follows the mobile app and the official logo. Tokens live in `src/app/globals.css` (`@theme`) and become
+Tailwind classes (`bg-kinko`, `text-income`, …):
 
-| Token | Cor | Origem / uso |
+| Token | Color | Source / usage |
 | --- | --- | --- |
-| `kinko-logo` | `#F52F35` | Quadrado do "K" no logo |
-| `kinko` | `#D01C1C` | Vermelho principal ("Kinko!", botões, loaders) |
-| `kinko-light` → `kinko-dark` | `#FF3B3B` → `#B30000` | Gradiente do botão de login / card de saldo |
-| `kinko-accent` | `#FF3B30` | Filtros ativos, linha de saídas |
-| `ink` | `#1F212A` | Texto "KINKO" do logo |
-| `income` / `credit` | `#57A773` / `#16A34A` | Entradas (gráfico / extrato) |
-| `debit` | `#DC2626` | Saídas no extrato |
-| `surface` / `chip` | `#F5F5F5` / `#EEEEEE` | Fundo das telas / filtros inativos |
+| `kinko-logo` | `#F52F35` | The "K" square in the logo |
+| `kinko` | `#D01C1C` | Primary red ("Kinko!", buttons, loaders) |
+| `kinko-light` → `kinko-dark` | `#FF3B3B` → `#B30000` | Login button / balance card gradient |
+| `kinko-accent` | `#FF3B30` | Active filters, expenses line |
+| `ink` | `#1F212A` | "KINKO" wordmark |
+| `income` / `credit` | `#57A773` / `#16A34A` | Income (chart / statement) |
+| `debit` | `#DC2626` | Expenses in the statement |
+| `surface` / `chip` | `#F5F5F5` / `#EEEEEE` | Screen background / inactive filters |
 
-Fonte: **Roboto** (a mesma do app). Assets em `public/` vêm de `kinko-mobile/assets/images/`
-(`logo.png`, `bglogin.png` convertido para JPG; `kinko-mark.png` e o favicon são o "K" recortado do logo).
+Font: **Roboto** (same as the app). Assets in `public/` come from `kinko-mobile/assets/images/`
+(`logo.png`, `bglogin.png` converted to JPG; `kinko-mark.png` and the favicon are the "K" cropped from the logo).

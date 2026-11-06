@@ -4,8 +4,8 @@ module Api
       include Authenticatable
 
       # POST /api/v1/deposits
-      # Cria um PaymentIntent no Stripe. O crédito no ledger só acontece
-      # quando o webhook payment_intent.succeeded chega.
+      # Creates a Stripe PaymentIntent. The ledger is only credited when the
+      # payment_intent.succeeded webhook arrives.
       def create
         amount_cents = amount_cents_param
         unless amount_cents.positive?

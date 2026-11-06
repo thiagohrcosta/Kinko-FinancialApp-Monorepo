@@ -1,10 +1,10 @@
 class WebhookEvent < ApplicationRecord
   validates :event_id, presence: true, uniqueness: true
 
-  # Registra o evento e retorna true só na primeira vez que ele é visto.
-  # `create!` é necessário: `create` engole a falha de unicidade (RecordInvalid
-  # não é lançado) e faria um reenvio do Stripe creditar o depósito duas vezes.
-  # RecordNotUnique cobre a corrida entre duas entregas simultâneas (índice único).
+  # Records the event and returns true only the first time it is seen.
+  # `create!` is required: `create` swallows the uniqueness failure (no
+  # RecordInvalid is raised), so a Stripe redelivery would credit the deposit
+  # twice. RecordNotUnique covers two concurrent deliveries (unique index).
   def self.process_once(event_id)
     create!(event_id: event_id, status: "processing")
     true

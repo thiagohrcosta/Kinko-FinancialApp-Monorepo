@@ -46,7 +46,7 @@ export function getBalance() {
   return authFetch<Balance>("/api/v1/accounts/balance");
 }
 
-/** month no formato YYYY-MM; o backend usa o mês atual por padrão. */
+/** month as YYYY-MM; the backend defaults to the current month. */
 export function getTransactions(month?: string) {
   const qs = month ? `?month=${encodeURIComponent(month)}` : "";
   return authFetch<Transaction[]>(`/api/v1/accounts/transactions${qs}`);

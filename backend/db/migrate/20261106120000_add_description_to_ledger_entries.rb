@@ -4,8 +4,8 @@ class AddDescriptionToLedgerEntries < ActiveRecord::Migration[8.0]
   def up
     add_column :ledger_entries, :description, :string
 
-    # Até aqui o domínio gravava em `reference` a descrição OU o transaction_id.
-    # 1) UUIDs viram transaction_id — só quando não conflitam com um já existente.
+    # Until now the domain stored either the description OR the transaction id in `reference`.
+    # 1) UUIDs become transaction_id — only when they don't clash with an existing one.
     execute <<~SQL
       UPDATE ledger_entries
          SET transaction_id = reference,
@@ -14,7 +14,7 @@ class AddDescriptionToLedgerEntries < ActiveRecord::Migration[8.0]
          AND (transaction_id IS NULL OR transaction_id = reference)
     SQL
 
-    # 2) Texto livre vira description.
+    # 2) Free text becomes description.
     execute <<~SQL
       UPDATE ledger_entries
          SET description = reference,
@@ -25,8 +25,8 @@ class AddDescriptionToLedgerEntries < ActiveRecord::Migration[8.0]
   end
 
   def down
-    # O schema antigo só tinha `reference`, que o domínio usava para a descrição
-    # (ou, sem ela, o transaction_id). Restaura nessa mesma prioridade.
+    # The old schema only had `reference`, which the domain used for the description
+    # (or, without one, the transaction id). Restore with that same priority.
     execute <<~SQL
       UPDATE ledger_entries
          SET reference = COALESCE(description, reference, transaction_id)

@@ -2,10 +2,10 @@ module Accounts
   class LedgerEntry
     attr_reader :amount_cents, :currency, :entry_type, :description, :transaction_id, :reference
 
-    # amount_cents é sempre positivo; o sinal vem de entry_type (ver #signed_amount).
-    # description: texto legível exibido no extrato.
-    # transaction_id: agrupa as duas pernas de uma movimentação (ex.: transferência).
-    # reference: identificador externo opcional (ex.: id do PaymentIntent no Stripe).
+    # amount_cents is always positive; the sign comes from entry_type (see #signed_amount).
+    # description: human-readable text shown in the statement.
+    # transaction_id: links both legs of a movement (e.g. a transfer).
+    # reference: optional external identifier (e.g. the Stripe PaymentIntent id).
     def initialize(amount_cents:, currency:, entry_type:, description: nil, transaction_id: nil, reference: nil)
       raise InvalidAmount unless amount_cents.positive?
       raise InvalidEntryType unless %i[credit debit].include?(entry_type)

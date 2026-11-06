@@ -1,28 +1,28 @@
 #!/usr/bin/env rails runner
-# Cria (ou recria) um usuário de teste com lançamentos nos últimos 30 dias.
-# Uso: bin/rails runner create_user_with_transactions.rb
+# Creates (or resets) a test user with ledger entries over the last 30 days.
+# Usage: bin/rails runner create_user_with_transactions.rb
 
 user = User.find_or_initialize_by(email: 'test_with_balance@kinko.com')
 user.assign_attributes(
   full_name: 'Test User With Balance',
   user_type: 'individual',
-  document_number: '98765432199',
-  phone_number: '11987654321',
-  address_street: 'Test Avenue',
-  address_number: '999',
-  address_neighborhood: 'Bela Vista',
-  address_city: 'São Paulo',
-  address_state: 'SP',
-  address_zip_code: '01310-100',
+  document_number: '123-45-6789',
+  phone_number: '(212) 555-0142',
+  address_street: 'Broadway',
+  address_number: '1500',
+  address_neighborhood: 'Midtown',
+  address_city: 'New York',
+  address_state: 'NY',
+  address_zip_code: '10036',
   password: 'password123',
   password_confirmation: 'password123'
 )
 user.save!
 
-# A conta padrão é criada no after_create do User
+# The default account is created in User's after_create
 account = user.accounts.first || Accounts::CreateAccount.new.call(user: user)
 
-# Recomeça do zero para o resultado ser previsível
+# Start from scratch so the totals are predictable
 LedgerEntry.where(account: account).delete_all
 
 puts "═" * 60
@@ -33,10 +33,10 @@ puts "  Name: #{user.full_name}"
 puts "  Account UUID: #{account.uuid}"
 puts ""
 
-# Renda: 5 lançamentos de crédito
+# Income: 5 credit entries
 puts "Adding income transactions (credit entries)..."
 incomes = 5.times.map do |i|
-  amount = (100 + (i * 50)) * 100 # em centavos
+  amount = (100 + (i * 50)) * 100 # in cents
   date = (25 - i).days.ago
 
   LedgerEntry.create!(
@@ -53,11 +53,11 @@ incomes = 5.times.map do |i|
   amount
 end
 
-# Despesas: 3 lançamentos de débito
+# Expenses: 3 debit entries
 puts ""
 puts "Adding expense transactions (debit entries)..."
 expenses = 3.times.map do |i|
-  amount = (50 + (i * 25)) * 100 # em centavos
+  amount = (50 + (i * 25)) * 100 # in cents
   date = (20 - i).days.ago
 
   LedgerEntry.create!(

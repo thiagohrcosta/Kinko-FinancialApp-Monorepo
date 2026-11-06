@@ -18,11 +18,11 @@ export async function startDeposit(rawAmount: string): Promise<StartDepositResul
     const { client_secret } = await createDeposit(amountCents);
     return { ok: true, clientSecret: client_secret, amountCents };
   } catch (err) {
-    unstable_rethrow(err); // ex.: redirect para /auth/logout quando o token expira
+    unstable_rethrow(err); // e.g. redirect to /auth/logout when the token expired
     if (err instanceof ApiError && err.status === 502) {
-      return { ok: false, error: "O provedor de pagamentos está indisponível no momento. Tente novamente mais tarde." };
+      return { ok: false, error: "The payment provider is unavailable right now. Please try again later." };
     }
     console.error("Deposit failed:", err);
-    return { ok: false, error: "Não foi possível iniciar o depósito. Tente novamente." };
+    return { ok: false, error: "We couldn't start the deposit. Please try again." };
   }
 }

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-// O proxy já redireciona "/" conforme a sessão; isto é só um fallback.
+// proxy.ts already redirects "/" based on the session; this is just a fallback.
 export default function Home() {
   redirect("/login");
 }

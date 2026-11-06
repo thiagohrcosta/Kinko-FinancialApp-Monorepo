@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 export const TOKEN_COOKIE = "kinko_token";
 export const USER_COOKIE = "kinko_user";
 
-/** O JWT emitido pelo Rails expira em 24h (JsonWebToken.encode). */
+/** The Rails-issued JWT expires after 24h (JsonWebToken.encode). */
 export const SESSION_MAX_AGE = 60 * 60 * 24;
 
 export type SessionUser = {

@@ -12,7 +12,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   const password = String(formData.get("password") ?? "");
 
   if (!email || !password) {
-    return { error: "Informe e-mail e senha.", email };
+    return { error: "Please enter both email and password.", email };
   }
 
   try {
@@ -21,10 +21,10 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   } catch (err) {
     unstable_rethrow(err);
     if (err instanceof ApiError && err.status === 401) {
-      return { error: "E-mail ou senha inválidos.", email };
+      return { error: "Invalid email or password.", email };
     }
     console.error("Login failed:", err);
-    return { error: "Não foi possível conectar ao servidor. Tente novamente.", email };
+    return { error: "We couldn't reach the server. Please try again.", email };
   }
 
   redirect("/dashboard");

@@ -13,11 +13,12 @@ export type TransferState =
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// Backend error → message shown to the user
 const ERRORS: Record<string, string> = {
-  "Insufficient funds": "Saldo insuficiente para esta transferência.",
-  "Cannot transfer to the same account": "Você não pode transferir para a sua própria conta.",
-  "Invalid amount": "Valor inválido.",
-  "Account not found": "Conta de destino não encontrada.",
+  "Insufficient funds": "Insufficient funds for this transfer.",
+  "Cannot transfer to the same account": "You can't transfer to your own account.",
+  "Invalid amount": "Invalid amount.",
+  "Account not found": "Destination account not found.",
 };
 
 export async function transfer(_prev: TransferState, formData: FormData): Promise<TransferState> {
@@ -28,11 +29,11 @@ export async function transfer(_prev: TransferState, formData: FormData): Promis
   };
 
   if (!UUID.test(values.destination)) {
-    return { status: "error", error: "Informe um número de conta (UUID) válido.", values };
+    return { status: "error", error: "Enter a valid account number (UUID).", values };
   }
   const amountCents = parseAmountToCents(values.amount);
   if (!amountCents) {
-    return { status: "error", error: "Informe um valor válido maior que zero (ex.: 25.50).", values };
+    return { status: "error", error: "Enter a valid amount greater than zero (e.g. 25.50).", values };
   }
 
   try {
@@ -41,14 +42,14 @@ export async function transfer(_prev: TransferState, formData: FormData): Promis
       amount_cents: amountCents,
       ...(values.description ? { description: values.description } : {}),
     });
-    refresh(); // saldo e extrato atualizados ao navegar de volta
+    refresh(); // balance and statement are fresh when navigating back
     return { status: "success", amountCents, destination: values.destination, transactionId: res.transaction_id };
   } catch (err) {
-    unstable_rethrow(err); // ex.: redirect para /auth/logout quando o token expira
+    unstable_rethrow(err); // e.g. redirect to /auth/logout when the token expired
     if (err instanceof ApiError && ERRORS[err.message]) {
       return { status: "error", error: ERRORS[err.message], values };
     }
     console.error("Transfer failed:", err);
-    return { status: "error", error: "Não foi possível concluir a transferência. Tente novamente.", values };
+    return { status: "error", error: "We couldn't complete the transfer. Please try again.", values };
   }
 }

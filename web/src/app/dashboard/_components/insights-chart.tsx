@@ -19,7 +19,7 @@ function compact(value: number) {
   return `$${Math.round(value)}`;
 }
 
-/** Curva Catmull-Rom suave (como d3.curveCatmullRom no app), convertida em Bézier. */
+/** Smooth Catmull-Rom curve (like d3.curveCatmullRom in the app), converted to Bézier. */
 function smoothPath(points: [number, number][]) {
   if (points.length === 0) return "";
   let d = `M${points[0][0]},${points[0][1]}`;
@@ -64,7 +64,7 @@ export async function InsightsChart({
     <div className="card p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-bold">Insight Dashboard</h2>
-        <nav className="flex gap-1.5" aria-label="Período">
+        <nav className="flex gap-1.5" aria-label="Range">
           {RANGES.map((r) => (
             <Link
               key={r}
@@ -82,12 +82,12 @@ export async function InsightsChart({
       </div>
 
       <div className="mt-2 flex gap-4 text-sm">
-        <span className="text-income">● Entradas</span>
-        <span className="text-expense">● Saídas</span>
+        <span className="text-income">● Income</span>
+        <span className="text-expense">● Expenses</span>
       </div>
 
       <div className="mt-4 flex gap-2">
-        {/* Eixo Y */}
+        {/* Y axis */}
         <div className="flex h-[220px] flex-col-reverse justify-between py-3 text-right text-[10px] text-muted">
           {ticks.map((t) => (
             <span key={t}>{compact(t)}</span>
@@ -105,8 +105,8 @@ export async function InsightsChart({
             <path d={expenses.line} fill="none" stroke="#FF3B30" strokeWidth={3} vectorEffect="non-scaling-stroke" strokeLinecap="round" />
           </svg>
 
-          {/* Faixas de hover com tooltip por dia */}
-          <div className="absolute inset-0 flex" role="list" aria-label={`Entradas e saídas dos últimos ${range} dias`}>
+          {/* Hover columns with a per-day tooltip */}
+          <div className="absolute inset-0 flex" role="list" aria-label={`Income and expenses for the last ${range} days`}>
             {data.dates.map((date, i) => (
               <div key={date} role="listitem" className="group relative flex-1">
                 <div className="absolute inset-y-0 left-1/2 hidden w-px bg-black/20 group-hover:block" />
@@ -116,8 +116,8 @@ export async function InsightsChart({
                   }`}
                 >
                   <p className="font-semibold text-ink">{formatDate(date)}</p>
-                  <p className="text-income">Entradas: {formatCurrency(data.income[i])}</p>
-                  <p className="text-expense">Saídas: {formatCurrency(data.expenses[i])}</p>
+                  <p className="text-income">Income: {formatCurrency(data.income[i])}</p>
+                  <p className="text-expense">Expenses: {formatCurrency(data.expenses[i])}</p>
                 </div>
               </div>
             ))}
