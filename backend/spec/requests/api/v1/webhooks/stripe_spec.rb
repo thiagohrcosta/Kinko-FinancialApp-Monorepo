@@ -69,6 +69,42 @@ RSpec.describe "Api::V1::Webhooks::Stripe", type: :request do
     expect(account.ledger_entries.count).to eq(0)
   end
 
+  describe "unsigned payloads" do
+    before do
+      allow(Stripe::Webhook).to receive(:construct_event)
+        .and_raise(Stripe::SignatureVerificationError.new("bad", "sig"))
+    end
+
+    it "are rejected in development unless explicitly enabled" do
+      allow(Rails.env).to receive(:development?).and_return(true)
+
+      deliver(event)
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(account.ledger_entries.count).to eq(0)
+    end
+
+    it "are accepted in development when STRIPE_WEBHOOK_ALLOW_UNSIGNED=true" do
+      allow(Rails.env).to receive(:development?).and_return(true)
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("STRIPE_WEBHOOK_ALLOW_UNSIGNED").and_return("true")
+
+      deliver(event)
+
+      expect(response).to have_http_status(:ok)
+      expect(account.ledger_entries.sole.reference).to eq("pi_123")
+    end
+
+    it "are rejected outside development even when the flag is set" do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("STRIPE_WEBHOOK_ALLOW_UNSIGNED").and_return("true")
+
+      deliver(event)
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
   it "rejects an invalid signature outside development" do
     allow(Stripe::Webhook).to receive(:construct_event)
       .and_raise(Stripe::SignatureVerificationError.new("bad", "sig"))

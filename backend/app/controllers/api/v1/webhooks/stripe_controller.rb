@@ -1,39 +1,17 @@
-require "ostruct"
-
 class Api::V1::Webhooks::StripeController < ApplicationController
   def create
     payload = request.body.read
     sig_header = request.env["HTTP_STRIPE_SIGNATURE"]
 
-    event = if Rails.env.development?
-      # Em desenvolvimento, aceita webhooks com ou sem assinatura
-      begin
-        Stripe::Webhook.construct_event(
-          payload,
-          sig_header,
-          ENV["STRIPE_WEBHOOK_SECRET"]
-        )
-      rescue Stripe::SignatureVerificationError => e
-        # Se falhar a verificação em dev, tenta parsear direto o JSON
-        event_data = JSON.parse(payload)
-        OpenStruct.new(
-          id: event_data["id"],
-          type: event_data["type"],
-          data: OpenStruct.new(object: event_data["data"]["object"])
-        )
-      end
-    else
-      # Em produção, sempre valida a assinatura
-      begin
-        Stripe::Webhook.construct_event(
-          payload,
-          sig_header,
-          ENV["STRIPE_WEBHOOK_SECRET"]
-        )
-      rescue Stripe::SignatureVerificationError => e
-        Rails.logger.warn("Webhook signature verification failed: #{e.message}")
-        return head :unauthorized
-      end
+    event = begin
+      Stripe::Webhook.construct_event(payload, sig_header, ENV["STRIPE_WEBHOOK_SECRET"])
+    rescue Stripe::SignatureVerificationError => e
+      return head :unauthorized unless self.class.allow_unsigned?
+
+      # Opt-in, development only: lets you replay a payload with curl.
+      # `stripe listen` signs its events, so it never needs this.
+      Rails.logger.warn("Accepting UNSIGNED Stripe webhook (STRIPE_WEBHOOK_ALLOW_UNSIGNED): #{e.message}")
+      Stripe::Event.construct_from(JSON.parse(payload))
     end
 
     # Claiming the event and applying it share one transaction: a redelivery
@@ -49,6 +27,14 @@ class Api::V1::Webhooks::StripeController < ApplicationController
     end
 
     head :ok
+  rescue JSON::ParserError
+    head :bad_request
+  end
+
+  # Unsigned webhooks are rejected unless explicitly enabled, and never
+  # outside development (even if the variable leaks into another env).
+  def self.allow_unsigned?
+    Rails.env.development? && ENV["STRIPE_WEBHOOK_ALLOW_UNSIGNED"] == "true"
   end
 
   private
