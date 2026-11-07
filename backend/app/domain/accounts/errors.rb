@@ -13,6 +13,12 @@ module Accounts
     end
   end
 
+  class CurrencyMismatch < DomainError
+    def initialize(msg = "Currency does not match the account currency")
+      super
+    end
+  end
+
   class AccountNotFound < DomainError; end
   class InvalidAccount < DomainError; end
   class InvalidEntryType < StandardError; end

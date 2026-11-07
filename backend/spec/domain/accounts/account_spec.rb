@@ -272,4 +272,19 @@ RSpec.describe Accounts::Account do
       expect(account.entries.size).to eq(first_entry_count + 1)
     end
   end
+
+  describe "currency" do
+    it "rejects a credit in a different currency than the account" do
+      expect { account.credit!(Accounts::Money.new(10_00, "EUR")) }
+        .to raise_error(Accounts::CurrencyMismatch)
+    end
+
+    it "rejects a debit in a different currency than the account" do
+      account.credit!(money_100)
+
+      expect { account.debit!(Accounts::Money.new(10_00, "EUR")) }
+        .to raise_error(Accounts::CurrencyMismatch)
+      expect(account.balance).to eq(100_00)
+    end
+  end
 end
