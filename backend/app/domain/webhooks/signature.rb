@@ -21,7 +21,8 @@ module Webhooks
     # Reference implementation of the merchant-side check (used in specs and
     # shown in the docs).
     def valid?(body, header, secret, now: Time.now.to_i)
-      parts = header.to_s.split(",").to_h { |kv| kv.split("=", 2) }
+      # Malformed pairs (no "=") are ignored instead of raising.
+      parts = header.to_s.split(",").filter_map { |kv| kv.strip.split("=", 2) if kv.include?("=") }.to_h
       timestamp = Integer(parts["t"], exception: false)
       return false unless timestamp && parts["v1"]
       return false if (now - timestamp).abs > TOLERANCE

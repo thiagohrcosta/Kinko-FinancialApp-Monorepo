@@ -11,10 +11,10 @@ Rails.application.routes.draw do
   # namespace :api do
   namespace :api do
     namespace :v1 do
-      post 'auth/register', to: 'auth#register'
-      post 'auth/login',    to: 'auth#login'
+      post "auth/register", to: "auth#register"
+      post "auth/login",    to: "auth#login"
 
-      resources :accounts, only: [:index, :show, :create] do
+      resources :accounts, only: [ :index, :show, :create ] do
         collection do
           get :balance
           get :transactions
@@ -26,8 +26,8 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :deposits, only: [:create]
-      resources :transfers, only: [:create]
+      resources :deposits, only: [ :create ]
+      resources :transfers, only: [ :create ]
 
       # Payer side: preview and pay a copy-and-paste payment code.
       resources :payment_requests, only: [ :show ], param: :code do
@@ -49,7 +49,7 @@ Rails.application.routes.draw do
       end
 
       namespace :webhooks do
-        post 'stripe', to: 'stripe#create'
+        post "stripe", to: "stripe#create"
       end
     end
   end
