@@ -29,6 +29,25 @@ Rails.application.routes.draw do
       resources :deposits, only: [:create]
       resources :transfers, only: [:create]
 
+      # Payer side: preview and pay a copy-and-paste payment code.
+      resources :payment_requests, only: [ :show ], param: :code do
+        member do
+          post :pay
+          get :qr
+        end
+      end
+
+      # Merchant side: Kinko API key (integrations) or business JWT (dashboard).
+      namespace :merchant do
+        resources :payment_requests, only: [ :index, :show, :create ] do
+          member { post :cancel }
+        end
+        resources :api_keys, only: [ :index, :create, :destroy ]
+        resource :webhook_endpoint, only: [ :show, :update, :destroy ] do
+          post :rotate_secret
+        end
+      end
+
       namespace :webhooks do
         post 'stripe', to: 'stripe#create'
       end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_06_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_07_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,51 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_130000) do
     t.index ["transaction_id"], name: "index_ledger_entries_on_transaction_id"
     t.check_constraint "amount_cents > 0", name: "ledger_entries_amount_positive"
     t.check_constraint "entry_type::text = ANY (ARRAY['credit'::character varying, 'debit'::character varying]::text[])", name: "ledger_entries_entry_type_valid"
+  end
+
+  create_table "merchant_api_keys", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "last4", null: false
+    t.datetime "last_used_at"
+    t.string "name", null: false
+    t.datetime "revoked_at"
+    t.string "token_digest", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["token_digest"], name: "index_merchant_api_keys_on_token_digest", unique: true
+    t.index ["user_id"], name: "index_merchant_api_keys_on_user_id"
+  end
+
+  create_table "payment_requests", force: :cascade do |t|
+    t.bigint "amount_cents", null: false
+    t.datetime "canceled_at"
+    t.string "code", null: false
+    t.datetime "created_at", null: false
+    t.string "currency", null: false
+    t.string "description", null: false
+    t.datetime "expires_at", null: false
+    t.string "external_reference"
+    t.bigint "fee_cents", default: 0, null: false
+    t.string "idempotency_key"
+    t.bigint "merchant_account_id", null: false
+    t.bigint "merchant_api_key_id"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "paid_at"
+    t.bigint "payer_account_id"
+    t.uuid "public_id", default: -> { "gen_random_uuid()" }, null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["code"], name: "index_payment_requests_on_code", unique: true
+    t.index ["merchant_account_id", "idempotency_key"], name: "index_payment_requests_on_merchant_and_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
+    t.index ["merchant_account_id"], name: "index_payment_requests_on_merchant_account_id"
+    t.index ["merchant_api_key_id"], name: "index_payment_requests_on_merchant_api_key_id"
+    t.index ["payer_account_id"], name: "index_payment_requests_on_payer_account_id"
+    t.index ["public_id"], name: "index_payment_requests_on_public_id", unique: true
+    t.index ["status", "expires_at"], name: "index_payment_requests_on_status_and_expires_at"
+    t.check_constraint "amount_cents > 0", name: "payment_requests_amount_positive"
+    t.check_constraint "fee_cents >= 0 AND fee_cents <= amount_cents", name: "payment_requests_fee_valid"
+    t.check_constraint "status::text <> 'paid'::text OR payer_account_id IS NOT NULL AND paid_at IS NOT NULL", name: "payment_requests_paid_has_payer"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'paid'::character varying, 'canceled'::character varying, 'expired'::character varying]::text[])", name: "payment_requests_status_valid"
   end
 
   create_table "solid_cable_messages", force: :cascade do |t|
@@ -240,6 +285,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_130000) do
     t.index ["user_type"], name: "index_users_on_user_type"
   end
 
+  create_table "webhook_deliveries", force: :cascade do |t|
+    t.integer "attempts", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "delivered_at"
+    t.string "event_type", null: false
+    t.string "last_error"
+    t.integer "last_response_code"
+    t.jsonb "payload", null: false
+    t.uuid "public_id", default: -> { "gen_random_uuid()" }, null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "webhook_endpoint_id", null: false
+    t.index ["public_id"], name: "index_webhook_deliveries_on_public_id", unique: true
+    t.index ["webhook_endpoint_id"], name: "index_webhook_deliveries_on_webhook_endpoint_id"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'succeeded'::character varying, 'failed'::character varying]::text[])", name: "webhook_deliveries_status_valid"
+  end
+
+  create_table "webhook_endpoints", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "signing_secret", null: false
+    t.datetime "updated_at", null: false
+    t.string "url", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_webhook_endpoints_on_user_id", unique: true
+  end
+
   create_table "webhook_events", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "event_id"
@@ -250,6 +322,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_130000) do
 
   add_foreign_key "accounts", "users"
   add_foreign_key "ledger_entries", "accounts"
+  add_foreign_key "merchant_api_keys", "users"
+  add_foreign_key "payment_requests", "accounts", column: "merchant_account_id"
+  add_foreign_key "payment_requests", "accounts", column: "payer_account_id"
+  add_foreign_key "payment_requests", "merchant_api_keys"
   add_foreign_key "solid_queue_batch_executions", "solid_queue_batches", column: "batch_id", on_delete: :cascade
   add_foreign_key "solid_queue_batch_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
@@ -258,4 +334,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_130000) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "webhook_deliveries", "webhook_endpoints"
+  add_foreign_key "webhook_endpoints", "users"
 end
