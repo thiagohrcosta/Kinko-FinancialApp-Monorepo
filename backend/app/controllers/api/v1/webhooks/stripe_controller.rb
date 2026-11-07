@@ -6,7 +6,11 @@ class Api::V1::Webhooks::StripeController < ApplicationController
     event = begin
       Stripe::Webhook.construct_event(payload, sig_header, ENV["STRIPE_WEBHOOK_SECRET"])
     rescue Stripe::SignatureVerificationError => e
-      return head :unauthorized unless self.class.allow_unsigned?
+      unless self.class.allow_unsigned?
+        # Keeps a wrong STRIPE_WEBHOOK_SECRET visible instead of silent retries.
+        Rails.logger.warn("Webhook signature verification failed: #{e.message}")
+        return head :unauthorized
+      end
 
       # Opt-in, development only: lets you replay a payload with curl.
       # `stripe listen` signs its events, so it never needs this.

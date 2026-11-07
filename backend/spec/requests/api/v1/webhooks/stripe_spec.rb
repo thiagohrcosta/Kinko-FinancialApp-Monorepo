@@ -95,6 +95,15 @@ RSpec.describe "Api::V1::Webhooks::Stripe", type: :request do
       expect(account.ledger_entries.sole.reference).to eq("pi_123")
     end
 
+    it "log the signature failure when rejected" do
+      allow(Rails.logger).to receive(:warn).and_call_original
+
+      deliver(event)
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(Rails.logger).to have_received(:warn).with(/Webhook signature verification failed: bad/)
+    end
+
     it "are rejected outside development even when the flag is set" do
       allow(ENV).to receive(:[]).and_call_original
       allow(ENV).to receive(:[]).with("STRIPE_WEBHOOK_ALLOW_UNSIGNED").and_return("true")
