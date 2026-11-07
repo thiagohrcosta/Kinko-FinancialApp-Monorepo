@@ -17,7 +17,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
 
   try {
     const { token, user } = await apiLogin(email, password);
-    await createSession(token, { id: user.id, email: user.email, fullName: user.full_name });
+    await createSession(token, { id: user.id, email: user.email, fullName: user.full_name, userType: user.user_type });
   } catch (err) {
     unstable_rethrow(err);
     if (err instanceof ApiError && err.status === 401) {
