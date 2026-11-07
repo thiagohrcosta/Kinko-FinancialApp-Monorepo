@@ -18,6 +18,8 @@ const MAPPING = {
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
+  'doc.text.fill': 'receipt-long',
+  qrcode: 'qr-code-2',
 } as IconMapping;
 
 /**
