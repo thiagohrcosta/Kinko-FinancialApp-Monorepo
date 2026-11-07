@@ -11,6 +11,8 @@ export type SessionUser = {
   id: number;
   email: string;
   fullName: string;
+  /** Absent in sessions created before the merchant area existed: treated as individual. */
+  userType?: "individual" | "business";
 };
 
 const cookieOptions = {

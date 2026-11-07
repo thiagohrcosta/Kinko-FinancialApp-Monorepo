@@ -6,6 +6,7 @@ require "rspec/rails"
 
 # Require domain classes
 Dir[Rails.root.join('app/domain/**/*.rb')].each { |f| require f }
+Dir[Rails.root.join("spec/support/**/*.rb")].each { |f| require f }
 
 begin
   ActiveRecord::Migration.maintain_test_schema!
@@ -14,12 +15,13 @@ rescue ActiveRecord::PendingMigrationError => error
 end
 
 RSpec.configure do |config|
-  config.fixture_paths = [Rails.root.join("spec/fixtures")]
+  config.fixture_paths = [ Rails.root.join("spec/fixtures") ]
   config.use_transactional_fixtures = true
   config.infer_spec_type_from_file_location!
   config.filter_rails_from_backtrace!
 
   config.include FactoryBot::Syntax::Methods
+  config.include ActiveSupport::Testing::TimeHelpers
 
   Shoulda::Matchers.configure do |config|
     config.integrate do |with|

@@ -13,5 +13,11 @@ FactoryBot.define do
     address_city { "Sao Paulo" }
     address_state { "SP" }
     address_zip_code { "01000-000" }
+
+    trait :business do
+      user_type { "business" }
+      business_name { "Acme Motors" }
+      business_sector { "automotive" }
+    end
   end
 end

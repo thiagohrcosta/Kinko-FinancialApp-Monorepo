@@ -5,6 +5,8 @@ class User < ApplicationRecord
          :recoverable, :rememberable, :validatable
 
   has_many :accounts, dependent: :destroy
+  has_many :merchant_api_keys, dependent: :destroy
+  has_one :webhook_endpoint, dependent: :destroy
 
   USER_TYPES = %w[individual business].freeze
 
@@ -26,6 +28,18 @@ class User < ApplicationRecord
 
   after_create :create_default_account
 
+  def business?
+    user_type == "business"
+  end
+
+  def primary_account
+    accounts.order(:id).first
+  end
+
+  def display_name
+    business? && business_name.present? ? business_name : full_name
+  end
+
   private
 
   def password_required?
@@ -34,9 +48,5 @@ class User < ApplicationRecord
 
   def create_default_account
     Accounts::CreateAccount.new.call(user: self)
-  end
-
-  def business?
-    user_type == "business"
   end
 end

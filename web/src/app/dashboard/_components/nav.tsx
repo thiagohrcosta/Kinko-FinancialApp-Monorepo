@@ -8,13 +8,17 @@ const LINKS = [
   { href: "/dashboard/statement", label: "Statement" },
   { href: "/dashboard/transfer", label: "Transfer" },
   { href: "/dashboard/deposit", label: "Deposit" },
+  { href: "/dashboard/pay", label: "Pay" },
 ] as const;
 
-export function DashboardNav() {
+const MERCHANT_LINK = { href: "/dashboard/merchant", label: "Merchant" } as const;
+
+export function DashboardNav({ isBusiness = false }: { isBusiness?: boolean }) {
   const pathname = usePathname();
+  const links = isBusiness ? [...LINKS, MERCHANT_LINK] : LINKS;
   return (
     <nav aria-label="Main" className="-mb-px flex gap-1 overflow-x-auto">
-      {LINKS.map(({ href, label }) => {
+      {links.map(({ href, label }) => {
         const active = href === "/dashboard" ? pathname === href : pathname.startsWith(href);
         return (
           <Link
