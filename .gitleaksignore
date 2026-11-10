@@ -1,0 +1,5 @@
+# Findings reviewed and accepted. One fingerprint per line: <commit>:<file>:<rule>:<line>
+
+# Commented-out example key from the Devise generator. Never used: Devise uses
+# secret_key_base. Removed from the file; this entry only covers the old commit.
+cc5ddee5faf6034253f73916058c4f2e9161f516:backend/config/initializers/devise.rb:generic-api-key:17
