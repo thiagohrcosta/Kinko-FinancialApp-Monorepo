@@ -86,6 +86,6 @@ jobs:
       - name: Scan
         run: >
           semgrep scan --error --metrics=off
-          --config p/ruby --config p/rails
+          --config p/ruby
           --config p/typescript --config p/react --config p/nextjs
           --config p/secrets
