@@ -1,0 +1,91 @@
+name: Security
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # New advisories are published every day, even when the code doesn't change.
+    - cron: "17 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  dependency_audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          working-directory: backend
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Backend (bundler-audit)
+        working-directory: backend
+        run: bin/bundler-audit check --update
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Web (npm audit, high and critical)
+        working-directory: web
+        run: npm audit --omit=dev --audit-level=high
+
+      # Expo and React Native pull in many build-time packages with open
+      # high-severity advisories that we can't fix without upgrading Expo.
+      # Fail on critical only until that upgrade happens.
+      - name: Mobile (yarn audit, critical)
+        working-directory: kinko-mobile
+        run: |
+          status=0
+          yarn audit --groups dependencies --summary || status=$?
+          # yarn v1 exits with a bitmask: 1 info, 2 low, 4 moderate, 8 high, 16 critical.
+          if (( status & 16 )); then
+            echo "::error::Critical vulnerabilities in kinko-mobile dependencies"
+            exit 1
+          fi
+
+  secret_scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: 8.28.0
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          base=https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}
+          tarball=gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz
+          curl -sSfLO "$base/$tarball"
+          curl -sSfL "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt" | grep " $tarball\$" | sha256sum -c -
+          tar -xzf "$tarball" gitleaks
+
+      # Accepted findings live in .gitleaksignore.
+      - name: Scan git history
+        run: ./gitleaks git . --no-banner --redact --verbose
+
+  semgrep:
+    name: Semgrep
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:1.184.0
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Scan
+        run: >
+          semgrep scan --error --metrics=off
+          --config p/ruby --config p/rails
+          --config p/typescript --config p/react --config p/nextjs
+          --config p/secrets
