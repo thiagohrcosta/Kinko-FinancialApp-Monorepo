@@ -22,6 +22,11 @@ async function UserMenu() {
   );
 }
 
+async function Nav() {
+  const user = await getSessionUser();
+  return <DashboardNav isBusiness={user?.userType === "business"} />;
+}
+
 export default function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
   return (
     <div className="flex min-h-full flex-1 flex-col">
@@ -35,7 +40,9 @@ export default function DashboardLayout({ children }: LayoutProps<"/dashboard">)
           </Suspense>
         </div>
         <div className="mx-auto max-w-6xl px-5">
-          <DashboardNav />
+          <Suspense fallback={<DashboardNav />}>
+            <Nav />
+          </Suspense>
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-8">{children}</main>

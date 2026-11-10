@@ -21,6 +21,12 @@ bundle exec rails generate rspec:install
 
 > Note: In this repository, the equivalent RSpec setup files were created manually to keep the process deterministic in CI.
 
+## Payment gateway
+
+Merchants (business users) can charge Kinko users with copy-and-paste payment
+codes and QR codes, integrate with Kinko API keys and receive signed webhooks.
+See [docs/payment-gateway.md](docs/payment-gateway.md) for the merchant API.
+
 ## Environment variables
 
 Set in `backend/.env` (loaded by `docker-compose.yml`).
