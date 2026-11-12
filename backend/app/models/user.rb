@@ -25,6 +25,15 @@ class User < ApplicationRecord
   validates :address_city, presence: true
   validates :address_state, presence: true
   validates :address_zip_code, presence: true
+  # Required at sign-up. Users created before the country was asked have none
+  # and are prompted for it (privacy region :unknown until then).
+  validates :address_country, presence: true, on: :create
+  validates :address_country, inclusion: { in: Country::CODES, message: "is not a valid country" }, allow_nil: true
+  validates :address_state, inclusion: { in: Country::US_STATES, message: "must be a US state code, e.g. CA" },
+                            if: :in_us?
+
+  normalizes :address_country, with: ->(country) { country.strip.upcase.presence }
+  before_validation :normalize_us_state, if: :in_us?
 
   after_create :create_default_account
 
@@ -40,10 +49,23 @@ class User < ApplicationRecord
     business? && business_name.present? ? business_name : full_name
   end
 
+  def in_us?
+    address_country == "US"
+  end
+
+  # Deadlines and extras for privacy requests depend on it (see PrivacyRegion).
+  def privacy_region
+    PrivacyRegion.for(country: address_country, state: address_state)
+  end
+
   private
 
   def password_required?
     new_record? || password.present? || password_confirmation.present?
+  end
+
+  def normalize_us_state
+    self.address_state = address_state.to_s.strip.upcase
   end
 
   def create_default_account

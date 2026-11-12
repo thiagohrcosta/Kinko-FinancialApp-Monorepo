@@ -43,6 +43,7 @@ module Api
           :address_state,
           :address_neighborhood,
           :address_zip_code,
+          :address_country,
           :password,
           :password_confirmation
         )

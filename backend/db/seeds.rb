@@ -21,6 +21,7 @@ upsert_user!(
   address_neighborhood: 'Downtown',
   address_city: 'Sao Paulo',
   address_state: 'SP',
+  address_country: 'BR',
   address_zip_code: '01001000',
   password: seed_password,
   password_confirmation: seed_password
@@ -37,6 +38,7 @@ upsert_user!(
   address_neighborhood: 'Business District',
   address_city: 'Sao Paulo',
   address_state: 'SP',
+  address_country: 'BR',
   address_zip_code: '01311000',
   password: seed_password,
   password_confirmation: seed_password
@@ -116,6 +118,7 @@ target_partners.times do |index|
     address_neighborhood: 'Commercial Center',
     address_city: 'Sao Paulo',
     address_state: 'SP',
+    address_country: 'BR',
     address_zip_code: format('04567%03d', index % 999),
     password: seed_password,
     password_confirmation: seed_password

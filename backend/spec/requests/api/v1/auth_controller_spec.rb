@@ -13,6 +13,7 @@ RSpec.describe Api::V1::AuthController, type: :request do
       address_state: "SP",
       address_neighborhood: "Centro",
       address_zip_code: "01234567",
+      address_country: "BR",
       password: "password123",
       password_confirmation: "password123"
     }
@@ -57,6 +58,15 @@ RSpec.describe Api::V1::AuthController, type: :request do
 
         decoded = JsonWebToken.decode(token)
         expect(decoded["user_id"]).to eq(User.last.id)
+      end
+    end
+
+    context "without a country" do
+      it "asks for it" do
+        post "/api/v1/auth/register", params: valid_attributes.except(:address_country)
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(JSON.parse(response.body)["errors"]).to include("Country can't be blank")
       end
     end
 

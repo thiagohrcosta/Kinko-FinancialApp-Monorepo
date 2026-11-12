@@ -26,6 +26,8 @@ Rails.application.routes.draw do
         end
       end
 
+      resource :profile, only: [ :show, :update ]
+
       resources :deposits, only: [ :create ]
       resources :transfers, only: [ :create ]
 

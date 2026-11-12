@@ -29,3 +29,8 @@
 
 en:
   hello: "Hello world"
+  activerecord:
+    attributes:
+      user:
+        address_country: "Country"
+        address_state: "State"

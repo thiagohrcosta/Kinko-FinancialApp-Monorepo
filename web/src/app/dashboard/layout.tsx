@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Logo } from "@/components/logo";
 import { getSessionUser } from "@/lib/session";
 import { logout } from "@/lib/session-actions";
+import { CountryPrompt } from "./_components/country-prompt";
 import { DashboardNav } from "./_components/nav";
 
 async function UserMenu() {
@@ -45,7 +46,12 @@ export default function DashboardLayout({ children }: LayoutProps<"/dashboard">)
           </Suspense>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-8">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-8">
+        <Suspense fallback={null}>
+          <CountryPrompt />
+        </Suspense>
+        {children}
+      </main>
     </div>
   );
 }

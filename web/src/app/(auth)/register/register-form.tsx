@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { CountrySelect } from "@/components/country-select";
 import { register, type RegisterState } from "./actions";
 
 const initialState: RegisterState = {};
@@ -71,12 +72,13 @@ export function RegisterForm() {
 
       <section className="grid gap-4 sm:grid-cols-6">
         <h2 className="text-sm font-bold text-kinko sm:col-span-6">Address</h2>
+        <CountrySelect defaultValue={v.address_country} className="sm:col-span-6" />
         <Field name="address_number" label="Number" required defaultValue={v.address_number} className="sm:col-span-2" />
         <Field name="address_street" label="Street" required defaultValue={v.address_street} autoComplete="address-line1" className="sm:col-span-4" />
         <Field name="address_complement" label="Apt, suite, etc." defaultValue={v.address_complement} autoComplete="address-line2" className="sm:col-span-3" />
         <Field name="address_neighborhood" label="Neighborhood" required defaultValue={v.address_neighborhood} className="sm:col-span-3" />
-        <Field name="address_city" label="City" required defaultValue={v.address_city} autoComplete="address-level2" className="sm:col-span-3" />
-        <Field name="address_state" label="State" required maxLength={2} placeholder="NY" defaultValue={v.address_state} autoComplete="address-level1" className="sm:col-span-1" />
+        <Field name="address_city" label="City" required defaultValue={v.address_city} autoComplete="address-level2" className="sm:col-span-2" />
+        <Field name="address_state" label="State / province" required placeholder="e.g. CA" defaultValue={v.address_state} autoComplete="address-level1" className="sm:col-span-2" />
         <Field name="address_zip_code" label="ZIP code" required defaultValue={v.address_zip_code} autoComplete="postal-code" inputMode="numeric" className="sm:col-span-2" />
       </section>
 

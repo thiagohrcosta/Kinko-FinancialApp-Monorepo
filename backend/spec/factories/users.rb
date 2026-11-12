@@ -13,6 +13,14 @@ FactoryBot.define do
     address_city { "Sao Paulo" }
     address_state { "SP" }
     address_zip_code { "01000-000" }
+    address_country { "BR" }
+
+    trait :californian do
+      address_country { "US" }
+      address_state { "CA" }
+      address_city { "San Francisco" }
+      address_zip_code { "94105" }
+    end
 
     trait :business do
       user_type { "business" }
