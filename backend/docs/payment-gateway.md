@@ -121,8 +121,9 @@ The response includes the **signing secret** (`kinko_whsec_…`). Rotate it with
 `POST /api/v1/merchant/webhook_endpoint/rotate_secret`. `DELETE` disables delivery.
 
 Only public `https` URLs are accepted. URLs that resolve to private, loopback,
-link-local or CGNAT addresses are rejected when you save them and checked again
-before each delivery.
+link-local, CGNAT or other special-use addresses are rejected when you save them and
+checked again before each delivery. The delivery connects to the address that was
+checked, so changing DNS in between can't redirect it.
 
 ### Events
 
@@ -144,9 +145,14 @@ Kinko-Signature: t=1794015623,v1=5f2b…
 ```
 
 * `data` is the same object the API returns for the charge.
-* Answer with any `2xx` within 5 seconds. Other responses, timeouts and network
-  errors are retried with growing delays, up to 8 attempts. After that the
+* Answer with any `2xx` within 5 seconds. Other responses (redirects included: they
+  are not followed), timeouts and network errors are retried after 1 min, 5 min,
+  30 min, 2 h, 6 h, 12 h and 24 h: 8 attempts over about 45 hours. After that the
   delivery is marked `failed`.
+* Resend a delivery from the dashboard (**Merchant → API keys & webhooks**) or with
+  `POST /api/v1/merchant/webhook_deliveries/:event_id/redeliver` (dashboard session only).
+  It sends the same event, with the same `Kinko-Event-Id`, and starts a new retry
+  schedule. A delivery that is still being retried can't be resent (`409`).
 * Deliveries can arrive more than once. Use `Kinko-Event-Id` (or `data.id` + `type`)
   to process each event only once.
 * A webhook is only sent once the payment is committed. A rolled-back payment never

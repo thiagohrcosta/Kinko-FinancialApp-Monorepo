@@ -5,7 +5,7 @@ import { formatDate, formatTime } from "@/lib/format";
 import { getWebhookEndpoint, listApiKeys, type ApiKey } from "@/lib/kinko";
 import { CardSkeleton } from "../../_components/skeleton";
 import { BusinessOnly, MerchantTabs, StatusBadge } from "../_components";
-import { revokeApiKeyAction, rotateSecretAction } from "../actions";
+import { redeliverWebhookAction, revokeApiKeyAction, rotateSecretAction } from "../actions";
 import { NewApiKeyForm, WebhookUrlForm } from "./forms";
 
 export const metadata: Metadata = { title: "API keys & webhooks · Kinko" };
@@ -103,7 +103,16 @@ async function Developers() {
                       {d.last_error && <> · {d.last_error}</>}
                     </p>
                   </div>
-                  <StatusBadge status={d.status} />
+                  <div className="flex shrink-0 items-center gap-2">
+                    <StatusBadge status={d.status} />
+                    {d.status !== "pending" && endpoint?.active && (
+                      <form action={redeliverWebhookAction.bind(null, d.id)}>
+                        <button type="submit" className="btn-ghost px-2 py-1 text-xs" aria-label={`Resend ${d.event_type}`}>
+                          Resend
+                        </button>
+                      </form>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

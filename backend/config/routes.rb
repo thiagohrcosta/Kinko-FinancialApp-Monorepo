@@ -46,6 +46,9 @@ Rails.application.routes.draw do
         resource :webhook_endpoint, only: [ :show, :update, :destroy ] do
           post :rotate_secret
         end
+        resources :webhook_deliveries, only: [] do
+          member { post :redeliver }
+        end
       end
 
       namespace :webhooks do
