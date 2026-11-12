@@ -1,14 +1,11 @@
 require "rails_helper"
 
 RSpec.describe User, type: :model do
-  # Subject reutilizável
   subject(:user) { build(:user) }
 
   describe "validations" do
-    # Testa tudo de uma vez
     it { is_expected.to be_valid }
 
-    # Usando shoulda-matchers (muito mais limpo!)
     it { is_expected.to validate_presence_of(:email) }
     it { is_expected.to validate_presence_of(:password) }
     it { is_expected.to validate_presence_of(:full_name) }
