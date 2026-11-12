@@ -85,25 +85,32 @@ export async function revokeApiKeyAction(id: number) {
   revalidatePath("/dashboard/merchant/developers");
 }
 
-export type WebhookState = { status: "idle" } | { status: "error"; error: string; url: string } | { status: "saved" };
+export type WebhookState =
+  | { status: "idle" }
+  | { status: "error"; error: string; url: string }
+  | { status: "saved"; secret?: string };
 
 export async function saveWebhookAction(_prev: WebhookState, formData: FormData): Promise<WebhookState> {
   const url = String(formData.get("url") ?? "").trim();
   if (!url) return { status: "error", error: "Enter the URL that will receive the webhooks.", url };
   try {
-    await saveWebhookEndpoint(url);
+    // A new endpoint comes with its signing secret, shown this one time.
+    const { endpoint } = await saveWebhookEndpoint(url);
     revalidatePath("/dashboard/merchant/developers");
-    return { status: "saved" };
+    return { status: "saved", secret: endpoint.signing_secret };
   } catch (err) {
     return { status: "error", error: message(err, "We couldn't save the URL. Please try again."), url };
   }
 }
 
-export async function rotateSecretAction() {
+export type RotateSecretState = { status: "idle" } | { status: "rotated"; secret: string } | { status: "error"; error: string };
+
+export async function rotateSecretAction(): Promise<RotateSecretState> {
   try {
-    await rotateWebhookSecret();
+    const { endpoint } = await rotateWebhookSecret();
+    revalidatePath("/dashboard/merchant/developers");
+    return { status: "rotated", secret: endpoint.signing_secret ?? "" };
   } catch (err) {
-    message(err, "Rotate failed");
+    return { status: "error", error: message(err, "We couldn't rotate the secret. Please try again.") };
   }
-  revalidatePath("/dashboard/merchant/developers");
 }

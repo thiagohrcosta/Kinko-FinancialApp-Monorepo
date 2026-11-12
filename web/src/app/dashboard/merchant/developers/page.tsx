@@ -5,8 +5,8 @@ import { formatDate, formatTime } from "@/lib/format";
 import { getWebhookEndpoint, listApiKeys, type ApiKey } from "@/lib/kinko";
 import { CardSkeleton } from "../../_components/skeleton";
 import { BusinessOnly, MerchantTabs, StatusBadge } from "../_components";
-import { revokeApiKeyAction, rotateSecretAction } from "../actions";
-import { NewApiKeyForm, WebhookUrlForm } from "./forms";
+import { revokeApiKeyAction } from "../actions";
+import { NewApiKeyForm, RotateSecretForm, WebhookUrlForm } from "./forms";
 
 export const metadata: Metadata = { title: "API keys & webhooks · Kinko" };
 
@@ -81,13 +81,10 @@ async function Developers() {
         {endpoint && (
           <div className="space-y-2">
             <p className="field-label">Signing secret</p>
-            <p className="select-all break-all rounded-lg bg-chip px-2 py-1 font-mono text-xs">{endpoint.signing_secret}</p>
+            <p className="break-all rounded-lg bg-chip px-2 py-1 font-mono text-xs">{endpoint.masked_secret}</p>
+            <p className="text-xs text-subtle">Shown once when created. Lost it? Rotate it and update your server.</p>
             {!endpoint.active && <p className="text-xs text-kinko">Delivery is disabled. Save the URL to enable it again.</p>}
-            <form action={rotateSecretAction}>
-              <button type="submit" className="btn-outline text-xs">
-                Rotate secret
-              </button>
-            </form>
+            <RotateSecretForm />
           </div>
         )}
         {deliveries.length > 0 && (

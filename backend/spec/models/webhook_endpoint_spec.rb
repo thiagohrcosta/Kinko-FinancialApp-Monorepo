@@ -12,6 +12,13 @@ RSpec.describe WebhookEndpoint, type: :model do
     expect(endpoint.reload.signing_secret).not_to eq(original)
   end
 
+  it "never includes the full secret in its JSON" do
+    endpoint = described_class.create!(user: merchant, url: "https://merchant.example/hooks")
+
+    expect(endpoint.as_json).to include(masked_secret: "kinko_whsec_…#{endpoint.signing_secret.last(4)}")
+    expect(endpoint.to_json).not_to include(endpoint.signing_secret)
+  end
+
   it "allows a single endpoint per merchant" do
     described_class.create!(user: merchant, url: "https://a.example/hooks")
 

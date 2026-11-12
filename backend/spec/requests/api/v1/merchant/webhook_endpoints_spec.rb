@@ -11,12 +11,31 @@ RSpec.describe "Api::V1::Merchant::WebhookEndpoints", type: :request do
     expect(json).to eq("endpoint" => nil, "deliveries" => [])
   end
 
-  it "configures the URL and returns the signing secret" do
+  it "configures the URL and returns the signing secret, the one time it's shown" do
     put "/api/v1/merchant/webhook_endpoint", params: { url: "https://merchant.example/hooks" }, headers: headers
 
     expect(response).to have_http_status(:ok)
     expect(json["endpoint"]).to include("url" => "https://merchant.example/hooks", "active" => true)
-    expect(json["endpoint"]["signing_secret"]).to start_with("kinko_whsec_")
+    expect(json["endpoint"]["signing_secret"]).to eq(WebhookEndpoint.last.signing_secret)
+  end
+
+  describe "the signing secret afterwards" do
+    let!(:endpoint) { WebhookEndpoint.create!(user: merchant, url: "https://a.example/hooks") }
+
+    it "is masked when reading the endpoint" do
+      get "/api/v1/merchant/webhook_endpoint", headers: headers
+
+      expect(json["endpoint"]).not_to have_key("signing_secret")
+      expect(json["endpoint"]["masked_secret"]).to eq("kinko_whsec_…#{endpoint.signing_secret.last(4)}")
+      expect(response.body).not_to include(endpoint.signing_secret)
+    end
+
+    it "is masked when only the URL changes" do
+      put "/api/v1/merchant/webhook_endpoint", params: { url: "https://b.example/hooks" }, headers: headers
+
+      expect(json["endpoint"]).not_to have_key("signing_secret")
+      expect(response.body).not_to include(endpoint.signing_secret)
+    end
   end
 
   it "keeps the secret when the URL changes and re-enables a disabled endpoint" do
@@ -46,6 +65,7 @@ RSpec.describe "Api::V1::Merchant::WebhookEndpoints", type: :request do
     expect(response).to have_http_status(:ok)
     expect(json["endpoint"]["signing_secret"]).not_to eq(endpoint.signing_secret)
     expect(endpoint.reload.signing_secret).to eq(json["endpoint"]["signing_secret"])
+    expect(json["endpoint"]["masked_secret"]).to end_with(endpoint.signing_secret.last(4))
   end
 
   it "returns 404 when rotating without an endpoint" do

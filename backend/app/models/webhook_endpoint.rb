@@ -48,8 +48,14 @@ class WebhookEndpoint < ApplicationRecord
     Rails.env.local?
   end
 
+  # The full signing secret is shown only when it's created or rotated (like
+  # API keys); everywhere else it's masked (#49).
+  def masked_secret
+    "#{SECRET_PREFIX}…#{signing_secret.to_s.last(4)}"
+  end
+
   def as_json(*)
-    { url: url, active: active, signing_secret: signing_secret, updated_at: updated_at&.iso8601 }
+    { url: url, active: active, masked_secret: masked_secret, updated_at: updated_at&.iso8601 }
   end
 
   private

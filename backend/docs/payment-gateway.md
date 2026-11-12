@@ -117,8 +117,11 @@ and sends the webhook.
 
 Set your endpoint in the dashboard or with
 `PUT /api/v1/merchant/webhook_endpoint {"url": "https://…"}` (dashboard session only).
-The response includes the **signing secret** (`kinko_whsec_…`). Rotate it with
-`POST /api/v1/merchant/webhook_endpoint/rotate_secret`. `DELETE` disables delivery.
+The **signing secret** (`kinko_whsec_…`) is returned **once**: in the response that
+creates the endpoint, and in the response of
+`POST /api/v1/merchant/webhook_endpoint/rotate_secret`. Store it then; afterwards the
+API only returns `masked_secret` (`kinko_whsec_…abcd`). Changing the URL keeps the
+secret. `DELETE` disables delivery.
 
 Only public `https` URLs are accepted. URLs that resolve to private, loopback,
 link-local or CGNAT addresses are rejected when you save them and checked again
