@@ -1,0 +1,283 @@
+# Personal data inventory: every column of every application table, plus the
+# places outside the database where personal data ends up.
+#
+# This file is the single source for privacy work (#81): the export (#86),
+# account deletion (#88) and retention (#89) read it. spec/privacy/personal_data_spec.rb
+# fails when a column exists without an entry here, so new data can't slip in
+# unclassified. docs/privacy/data-inventory.md is generated from it:
+#
+#   bin/rails privacy:inventory
+#
+# Column entries are either `not_personal` or a hash with:
+#   category     one of `categories` below
+#   sensitive    true for CPRA "sensitive personal information" (government ID,
+#                account credentials)
+#   purpose      why we hold it, in plain language
+#   basis        GDPR lawful basis: contract, legal_obligation,
+#                legitimate_interest or consent
+#   retention    one of `retention` below
+#   on_erasure   what a deletion request does to it: one of `on_erasure` below
+#   notes        optional
+
+categories:
+  identity: Name and other data that identify the person
+  contact: Email and phone
+  address: Postal address
+  government_id: Government-issued ID or tax number
+  business: Business account data
+  credentials: Passwords, reset tokens and other secrets
+  financial: Accounts, balances, transactions and charges
+  merchant_integration: API keys, webhook endpoints and deliveries
+  account: Account settings and type
+
+retention:
+  account_lifetime: While the account is open. Erased or anonymized as soon as the user asks for deletion.
+  aml_5_years: >-
+    5 years after the account is closed, to meet anti-money-laundering record keeping (BSA in the US,
+    AMLD in the EU). When a deletion request is accepted, the purge date is recorded and the data is
+    removed then.
+  webhook_30_days: 30 days after the delivery, then deleted (#89).
+  session_24_hours: Until the session expires (24 hours) or the user logs out.
+
+on_erasure:
+  delete: Deleted when the deletion request is processed.
+  anonymize: Replaced with a placeholder (the column can't be empty), when the deletion request is processed.
+  archive: >-
+    Moved out of the app into a restricted archive used only for legal obligations, and deleted when the
+    retention period ends.
+  keep: >-
+    Kept for the retention period. Not identifying on its own once identity data is anonymized; deleted
+    when the retention period ends.
+  scrub: Personal data inside the value (names in free text) is removed; the rest is kept.
+
+technical_columns: [id, created_at, updated_at]
+
+tables:
+  users:
+    full_name:
+      category: identity
+      purpose: Identify the account holder (know your customer) and show the name to people they pay
+      basis: legal_obligation
+      retention: aml_5_years
+      on_erasure: archive
+    email:
+      category: contact
+      purpose: Sign-in and account emails
+      basis: contract
+      retention: account_lifetime
+      on_erasure: anonymize
+    phone_number:
+      category: contact
+      purpose: Contact about the account and security
+      basis: contract
+      retention: account_lifetime
+      on_erasure: anonymize
+    document_number:
+      category: government_id
+      sensitive: true
+      purpose: Verify identity (know your customer)
+      basis: legal_obligation
+      retention: aml_5_years
+      on_erasure: archive
+    address_street: &address
+      category: address
+      purpose: Verify identity (know your customer) and decide which privacy law applies
+      basis: legal_obligation
+      retention: aml_5_years
+      on_erasure: archive
+    address_number: *address
+    address_complement: *address
+    address_neighborhood: *address
+    address_city: *address
+    address_state: *address
+    address_zip_code: *address
+    address_country: *address
+    business_name:
+      category: business
+      purpose: Identify the business (know your business) and show it to payers
+      basis: legal_obligation
+      retention: aml_5_years
+      on_erasure: archive
+    business_sector:
+      category: business
+      purpose: Shown to payers next to the business name
+      basis: contract
+      retention: account_lifetime
+      on_erasure: delete
+    user_type:
+      category: account
+      purpose: Personal or business account
+      basis: contract
+      retention: aml_5_years
+      on_erasure: keep
+    encrypted_password:
+      category: credentials
+      sensitive: true
+      purpose: Sign-in (bcrypt digest, never the password)
+      basis: contract
+      retention: account_lifetime
+      on_erasure: delete
+    reset_password_token:
+      category: credentials
+      sensitive: true
+      purpose: Password reset link
+      basis: contract
+      retention: account_lifetime
+      on_erasure: delete
+    reset_password_sent_at:
+      category: credentials
+      purpose: Expire the password reset link
+      basis: contract
+      retention: account_lifetime
+      on_erasure: delete
+    remember_created_at:
+      category: credentials
+      purpose: Devise "remember me" (unused by the API today)
+      basis: contract
+      retention: account_lifetime
+      on_erasure: delete
+
+  accounts:
+    user_id: &financial_record
+      category: financial
+      purpose: Run the account and keep the transaction record
+      basis: legal_obligation
+      retention: aml_5_years
+      on_erasure: keep
+    uuid:
+      <<: *financial_record
+      notes: Shown to other users as the account number to receive transfers
+    status: *financial_record
+
+  ledger_entries:
+    account_id: *financial_record
+    amount_cents: *financial_record
+    currency: *financial_record
+    entry_type: *financial_record
+    transaction_id: *financial_record
+    reference: *financial_record
+    description:
+      <<: *financial_record
+      on_erasure: scrub
+      notes: >-
+        Contains counterparties' names ("Transfer to <name>", "Payment from <name>"). Names must leave the
+        ledger before deletion can work (#87).
+
+  payment_requests:
+    merchant_account_id: *financial_record
+    payer_account_id: *financial_record
+    amount_cents: *financial_record
+    fee_cents: *financial_record
+    currency: *financial_record
+    status: *financial_record
+    paid_at: *financial_record
+    canceled_at: *financial_record
+    expires_at: *financial_record
+    code: *financial_record
+    public_id: *financial_record
+    description:
+      <<: *financial_record
+      notes: Written by the merchant and shown to the payer
+    external_reference:
+      <<: *financial_record
+      notes: The merchant's own id; can identify the merchant's customer
+    metadata:
+      <<: *financial_record
+      notes: Free-form key/values from the merchant; can contain their customer's data
+    idempotency_key: not_personal
+    merchant_api_key_id: not_personal
+
+  merchant_api_keys:
+    user_id: &merchant_integration
+      category: merchant_integration
+      purpose: Let the merchant's systems use the API
+      basis: contract
+      retention: account_lifetime
+      on_erasure: delete
+    name: *merchant_integration
+    last4: *merchant_integration
+    last_used_at: *merchant_integration
+    revoked_at: *merchant_integration
+    token_digest:
+      <<: *merchant_integration
+      category: credentials
+      sensitive: true
+      notes: SHA-256 digest; the key itself is never stored
+
+  webhook_endpoints:
+    user_id: *merchant_integration
+    url: *merchant_integration
+    active: *merchant_integration
+    signing_secret:
+      <<: *merchant_integration
+      category: credentials
+      sensitive: true
+
+  webhook_deliveries:
+    payload:
+      category: merchant_integration
+      purpose: Notify the merchant that a charge was paid, canceled or expired
+      basis: contract
+      retention: webhook_30_days
+      on_erasure: scrub
+      notes: Contains the payer's full name and account number; sent to the merchant (#96)
+    webhook_endpoint_id: not_personal
+    event_type: not_personal
+    status: not_personal
+    attempts: not_personal
+    last_response_code: not_personal
+    last_error: not_personal
+    delivered_at: not_personal
+    public_id: not_personal
+
+  webhook_events:
+    event_id: not_personal
+    status: not_personal
+
+# Personal data outside the application tables.
+other_stores:
+  - name: Web session cookies
+    where: "Browser: httpOnly cookies `kinko_token` (JWT) and `kinko_user` (id, email, full name, account type)"
+    retention: session_24_hours
+    notes: "`kinko_user` could hold only the id and account type (#96)"
+  - name: Mobile app storage
+    where: "Phone: AsyncStorage `authToken` (JWT) and the user JSON (name, email)"
+    retention: session_24_hours
+    notes: AsyncStorage isn't encrypted; move the token to the Keychain / Keystore (#96)
+  - name: Application logs
+    where: Rails logs on the hosting provider
+    retention: account_lifetime
+    notes: >-
+      Request parameters with token, password, email and other sensitive names are filtered. The Stripe
+      webhook logs the whole PaymentIntent (#96). Log retention isn't set yet (#89).
+  - name: Background jobs
+    where: Solid Queue tables (job arguments)
+    retention: account_lifetime
+    notes: Jobs receive record ids; finished jobs are cleared every hour
+  - name: Database backups
+    where: Hosting provider
+    retention: account_lifetime
+    notes: Backup retention isn't set yet (#89)
+
+# Who else receives personal data.
+recipients:
+  - name: Stripe
+    role: Processor
+    receives: Deposit amount, currency and the Kinko account number (PaymentIntent metadata). Card details are typed into Stripe's own form; Kinko never sees them.
+    location: United States
+    transfer_mechanism: To confirm (EU-US Data Privacy Framework / SCCs in Stripe's DPA)
+  - name: Hosting and database provider
+    role: Processor
+    receives: Everything in the database, logs and backups
+    location: To confirm
+    transfer_mechanism: To confirm
+  - name: Email provider
+    role: Processor
+    receives: Name and email, to send account emails (#79)
+    location: To confirm
+    transfer_mechanism: To confirm
+  - name: Merchants
+    role: Third party (independent controller)
+    receives: The payer's full name and account number when a charge is paid (API and webhooks)
+    location: Wherever the merchant is
+    transfer_mechanism: Disclosed in the privacy notice (#91); minimize what is sent (#96)
