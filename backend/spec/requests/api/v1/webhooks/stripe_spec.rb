@@ -69,14 +69,23 @@ RSpec.describe "Api::V1::Webhooks::Stripe", type: :request do
     expect(account.ledger_entries.count).to eq(0)
   end
 
-  describe "unsigned payloads" do
+  describe "signatures" do
     before do
       allow(Stripe::Webhook).to receive(:construct_event)
         .and_raise(Stripe::SignatureVerificationError.new("bad", "sig"))
     end
 
-    it "are rejected in development unless explicitly enabled" do
+    it "rejects an invalid signature" do
+      deliver(event)
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(account.ledger_entries.count).to eq(0)
+    end
+
+    it "rejects unsigned events in development too, even with the old bypass variable set" do
       allow(Rails.env).to receive(:development?).and_return(true)
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("STRIPE_WEBHOOK_ALLOW_UNSIGNED").and_return("true")
 
       deliver(event)
 
@@ -84,43 +93,59 @@ RSpec.describe "Api::V1::Webhooks::Stripe", type: :request do
       expect(account.ledger_entries.count).to eq(0)
     end
 
-    it "are accepted in development when STRIPE_WEBHOOK_ALLOW_UNSIGNED=true" do
-      allow(Rails.env).to receive(:development?).and_return(true)
-      allow(ENV).to receive(:[]).and_call_original
-      allow(ENV).to receive(:[]).with("STRIPE_WEBHOOK_ALLOW_UNSIGNED").and_return("true")
-
-      deliver(event)
-
-      expect(response).to have_http_status(:ok)
-      expect(account.ledger_entries.sole.reference).to eq("pi_123")
-    end
-
-    it "log the signature failure when rejected" do
+    it "logs the failure so a wrong STRIPE_WEBHOOK_SECRET is visible" do
       allow(Rails.logger).to receive(:warn).and_call_original
 
       deliver(event)
 
-      expect(response).to have_http_status(:unauthorized)
-      expect(Rails.logger).to have_received(:warn).with(/Webhook signature verification failed: bad/)
-    end
-
-    it "are rejected outside development even when the flag is set" do
-      allow(ENV).to receive(:[]).and_call_original
-      allow(ENV).to receive(:[]).with("STRIPE_WEBHOOK_ALLOW_UNSIGNED").and_return("true")
-
-      deliver(event)
-
-      expect(response).to have_http_status(:unauthorized)
+      expect(Rails.logger).to have_received(:warn).with(/signature verification failed: bad/)
     end
   end
 
-  it "rejects an invalid signature outside development" do
-    allow(Stripe::Webhook).to receive(:construct_event)
-      .and_raise(Stripe::SignatureVerificationError.new("bad", "sig"))
-
+  it "verifies the signature with the raw body and STRIPE_WEBHOOK_SECRET" do
     deliver(event)
 
-    expect(response).to have_http_status(:unauthorized)
-    expect(account.ledger_entries.count).to eq(0)
+    expect(Stripe::Webhook).to have_received(:construct_event).with(event.to_json, anything, ENV.fetch("STRIPE_WEBHOOK_SECRET"))
+  end
+
+  describe "logs" do
+    let(:logged) { [] }
+
+    before do
+      %i[info warn error].each do |level|
+        allow(Rails.logger).to receive(level).and_wrap_original do |original, *args, &block|
+          logged << (args.first || block&.call).to_s
+          original.call(*args, &block)
+        end
+      end
+    end
+
+    it "log ids and amounts, never the payer's billing details" do
+      event[:data][:object].merge!(receipt_email: "payer@example.com",
+                                   billing_details: { name: "Jane Payer", address: { line1: "1 Main St" } })
+
+      deliver(event)
+
+      expect(logged).to include("Stripe pi_123: deposited 2500 cents to account #{account.uuid}")
+      expect(logged.join("\n")).not_to include("Jane Payer", "1 Main St", "payer@example.com")
+    end
+
+    it "say why an event without an account is ignored" do
+      event[:data][:object][:metadata] = {}
+
+      deliver(event)
+
+      expect(response).to have_http_status(:ok)
+      expect(logged).to include("Stripe pi_123: no account_uuid in metadata, ignored")
+    end
+
+    it "say why an event for an unknown account is ignored" do
+      event[:data][:object][:metadata] = { account_uuid: "00000000-0000-4000-8000-00000000ffff" }
+
+      deliver(event)
+
+      expect(response).to have_http_status(:ok)
+      expect(logged).to include(/account 00000000-0000-4000-8000-00000000ffff not found, ignored/)
+    end
   end
 end

@@ -37,7 +37,18 @@ Set in `backend/.env` (loaded by `docker-compose.yml`).
 | `STRIPE_WEBHOOK_SECRET` | yes | Signing secret used to verify Stripe webhooks (`whsec_…`, also printed by `stripe listen`). |
 | `SYSTEM_ACCOUNT_UUID` | yes | UUID of the Kinko system account that mirrors card deposits. |
 | `KINKO_CURRENCY` | no (default `USD`) | ISO 4217 currency of the ledger. Accounts reject entries in any other currency, so set it once per environment: changing it later requires migrating existing entries. |
-| `STRIPE_WEBHOOK_ALLOW_UNSIGNED` | no (default off) | `true` accepts unsigned Stripe webhooks, **development only** (ignored in every other environment). Useful for replaying a payload with `curl`; `stripe listen` signs its events and does not need it. |
+
+### Stripe webhooks in development
+
+Every Stripe event must be signed, in development too. Forward events with the Stripe CLI, which signs them,
+and use the secret it prints as `STRIPE_WEBHOOK_SECRET`:
+
+```bash
+stripe listen --forward-to localhost:3000/api/v1/webhooks/stripe
+```
+
+To replay an event, use `stripe events resend <evt_id>` or `stripe trigger payment_intent.succeeded`
+instead of posting JSON with `curl`.
 
 ## Database schema
 
