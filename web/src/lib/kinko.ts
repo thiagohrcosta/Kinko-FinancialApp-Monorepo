@@ -74,6 +74,7 @@ export type RegisterPayload = {
   address_neighborhood: string;
   address_city: string;
   address_state: string;
+  address_country: string;
 };
 
 export function register(payload: RegisterPayload) {
@@ -81,6 +82,27 @@ export function register(payload: RegisterPayload) {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export type PrivacyRegion = "eu" | "us_ca" | "us_state_law" | "us_other" | "other" | "unknown";
+
+export type Profile = {
+  id: number;
+  email: string;
+  full_name: string;
+  user_type: "individual" | "business";
+  address_city: string;
+  address_state: string;
+  address_country: string | null;
+  privacy_region: PrivacyRegion;
+};
+
+export function getProfile() {
+  return authFetch<Profile>("/api/v1/profile");
+}
+
+export function updateProfileAddress(input: { address_country: string; address_state: string }) {
+  return authFetch<Profile>("/api/v1/profile", { method: "PATCH", body: JSON.stringify(input) });
 }
 
 export function createTransfer(input: { destination_account_uuid: string; amount_cents: number; description?: string }) {

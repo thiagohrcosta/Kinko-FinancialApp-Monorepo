@@ -10,7 +10,7 @@ export type RegisterState = { errors?: string[]; values?: Record<string, string>
 const FIELDS = [
   "full_name", "email", "password", "password_confirmation", "user_type", "business_name", "business_sector",
   "document_number", "phone_number", "address_zip_code", "address_street", "address_number",
-  "address_complement", "address_neighborhood", "address_city", "address_state",
+  "address_complement", "address_neighborhood", "address_city", "address_state", "address_country",
 ] as const;
 
 export async function register(_prev: RegisterState, formData: FormData): Promise<RegisterState> {
