@@ -59,6 +59,37 @@ RSpec.describe WebhookEndpoint, type: :model do
       end
     end
 
+    it "rejects other special-use and IPv4-mapped addresses" do
+      {
+        "mapped-loop.example" => "::ffff:127.0.0.1",
+        "mapped-private.example" => "::ffff:10.0.0.1",
+        "multicast.example" => "224.0.0.1",
+        "benchmark.example" => "198.18.0.1",
+        "testnet.example" => "203.0.113.7",
+        "broadcast.example" => "255.255.255.255",
+        "nat64.example" => "64:ff9b::a00:1",
+        "v6docs.example" => "2001:db8::1",
+        "v6unspecified.example" => "::"
+      }.each do |host, ip|
+        resolve(host, ip)
+        expect(described_class.safe_url?("https://#{host}/hooks")).to be(false), "accepted #{host} -> #{ip}"
+      end
+    end
+
+    it "accepts public IPv6 addresses" do
+      resolve("v6.example", "2606:4700::1111")
+      expect(described_class.safe_url?("https://v6.example/hooks")).to be(true)
+    end
+
+    it "returns the checked address to connect to" do
+      resolve("merchant.example", "93.184.216.34")
+
+      target = described_class.public_target("https://merchant.example/hooks")
+
+      expect(target.ip).to eq("93.184.216.34")
+      expect(target.uri.host).to eq("merchant.example")
+    end
+
     it "rejects a host when any of its addresses is private (DNS round-robin trick)" do
       resolve("mixed.example", "93.184.216.34", "10.0.0.1")
       expect(described_class.safe_url?("https://mixed.example/hooks")).to be(false)

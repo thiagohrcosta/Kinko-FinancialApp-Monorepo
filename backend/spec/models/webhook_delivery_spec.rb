@@ -43,4 +43,27 @@ RSpec.describe WebhookDelivery, type: :model do
       expect(described_class.count).to eq(0)
     end
   end
+
+  describe "#redeliver!" do
+    let!(:endpoint) { WebhookEndpoint.create!(user: merchant, url: "https://merchant.example/hooks") }
+    let(:delivery) { described_class.enqueue_for(user: merchant, event_type: "payment_request.paid", data: {}) }
+
+    it "sets it back to pending and enqueues it again" do
+      delivery.update!(status: "failed", last_error: "HTTP 500")
+
+      expect { delivery.redeliver! }.to have_enqueued_job(WebhookDeliveryJob).with(delivery.id)
+      expect(delivery.reload).to have_attributes(status: "pending", last_error: nil)
+    end
+  end
+
+  describe ".find_by_event_id!" do
+    let!(:endpoint) { WebhookEndpoint.create!(user: merchant, url: "https://merchant.example/hooks") }
+
+    it "finds a delivery by the id merchants see" do
+      delivery = described_class.enqueue_for(user: merchant, event_type: "payment_request.paid", data: {})
+
+      expect(described_class.find_by_event_id!(delivery.event_id)).to eq(delivery)
+      expect(delivery.payload["id"]).to eq(delivery.event_id)
+    end
+  end
 end

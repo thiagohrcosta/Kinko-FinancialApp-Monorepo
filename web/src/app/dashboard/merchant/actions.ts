@@ -8,6 +8,7 @@ import {
   cancelCharge,
   createApiKey,
   createCharge,
+  redeliverWebhook,
   revokeApiKey,
   rotateWebhookSecret,
   saveWebhookEndpoint,
@@ -97,6 +98,15 @@ export async function saveWebhookAction(_prev: WebhookState, formData: FormData)
   } catch (err) {
     return { status: "error", error: message(err, "We couldn't save the URL. Please try again."), url };
   }
+}
+
+export async function redeliverWebhookAction(id: string) {
+  try {
+    await redeliverWebhook(id);
+  } catch (err) {
+    message(err, "Redelivery failed");
+  }
+  revalidatePath("/dashboard/merchant/developers");
 }
 
 export async function rotateSecretAction() {

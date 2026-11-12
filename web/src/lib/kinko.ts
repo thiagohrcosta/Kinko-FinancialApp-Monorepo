@@ -227,3 +227,11 @@ export function saveWebhookEndpoint(url: string) {
 export function rotateWebhookSecret() {
   return authFetch<{ endpoint: WebhookEndpoint }>("/api/v1/merchant/webhook_endpoint/rotate_secret", { method: "POST" });
 }
+
+/** Sends a delivery again with the same event id (`id` is the evt_… id). */
+export function redeliverWebhook(id: string) {
+  return authFetch<{ id: string; status: WebhookDeliveryRow["status"] }>(
+    `/api/v1/merchant/webhook_deliveries/${encodeURIComponent(id)}/redeliver`,
+    { method: "POST" },
+  );
+}

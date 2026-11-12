@@ -23,4 +23,20 @@ class WebhookDelivery < ApplicationRecord
     ActiveRecord.after_all_transactions_commit { WebhookDeliveryJob.perform_later(delivery.id) }
     delivery
   end
+
+  # The id merchants see (payload "id" and the Kinko-Event-Id header).
+  def self.find_by_event_id!(event_id)
+    find_by!(public_id: event_id.to_s.delete_prefix("evt_"))
+  end
+
+  def event_id
+    "evt_#{public_id}"
+  end
+
+  # Sends the same event again, with the same id, so a merchant that already
+  # processed it can skip it. Starts a fresh retry schedule.
+  def redeliver!
+    update!(status: "pending", last_error: nil)
+    WebhookDeliveryJob.perform_later(id)
+  end
 end
