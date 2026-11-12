@@ -6,14 +6,23 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
 1. Install dependencies
 
+   This app uses **Yarn 1** (`yarn.lock`). Don't use `npm install`: it would create a
+   `package-lock.json` that resolves different versions, and CI rejects it.
+
    ```bash
-   npm install
+   yarn install
    ```
 
 2. Start the app
 
    ```bash
-   npx expo start
+   yarn start
+   ```
+
+3. Lint, typecheck and test (the same checks as CI)
+
+   ```bash
+   yarn lint && yarn typecheck && yarn test
    ```
 
 In the output, you'll find options to open the app in a
@@ -30,7 +39,7 @@ You can start developing by editing the files inside the **app** directory. This
 When you're ready, run:
 
 ```bash
-npm run reset-project
+yarn reset-project
 ```
 
 This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.

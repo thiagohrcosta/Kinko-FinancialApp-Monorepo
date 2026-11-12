@@ -23,6 +23,15 @@ jobs:
           cache: yarn
           cache-dependency-path: kinko-mobile/yarn.lock
 
+      # One lockfile: yarn.lock. A package-lock.json would resolve different
+      # versions than CI tests, and --frozen-lockfile fails if yarn.lock is stale.
+      - name: Check there is only one lockfile
+        run: |
+          if [ -e package-lock.json ]; then
+            echo "::error file=kinko-mobile/package-lock.json::This app uses Yarn. Delete package-lock.json and run yarn install."
+            exit 1
+          fi
+
       - run: yarn install --frozen-lockfile
       - run: yarn lint
       - run: yarn typecheck

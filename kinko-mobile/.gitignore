@@ -2,6 +2,8 @@
 
 # dependencies
 node_modules/
+# This app uses Yarn (yarn.lock); an npm lockfile would resolve different versions
+package-lock.json
 
 # Expo
 .expo/
