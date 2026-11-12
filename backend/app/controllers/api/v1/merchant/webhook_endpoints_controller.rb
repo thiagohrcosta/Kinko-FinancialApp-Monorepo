@@ -23,8 +23,10 @@ module Api
         def update
           endpoint = current_merchant.webhook_endpoint || current_merchant.build_webhook_endpoint
           endpoint.assign_attributes(url: params.require(:url).to_s.strip, active: true)
+          created = endpoint.new_record?
           if endpoint.save
-            render json: { endpoint: endpoint }
+            # A new endpoint gets a new secret: the only time it's shown, with rotate_secret.
+            render json: { endpoint: created ? with_secret(endpoint) : endpoint }
           else
             render json: { errors: endpoint.errors.full_messages }, status: :unprocessable_entity
           end
@@ -38,7 +40,7 @@ module Api
           return render json: { error: "Webhook endpoint not configured" }, status: :not_found unless endpoint
 
           endpoint.rotate_secret!
-          render json: { endpoint: endpoint }
+          render json: { endpoint: with_secret(endpoint) }
         end
 
         # DELETE /api/v1/merchant/webhook_endpoint  (disables delivery)
@@ -46,6 +48,11 @@ module Api
           current_merchant.webhook_endpoint&.update!(active: false)
           head :no_content
         end
+
+        private
+          def with_secret(endpoint)
+            endpoint.as_json.merge(signing_secret: endpoint.signing_secret)
+          end
       end
     end
   end

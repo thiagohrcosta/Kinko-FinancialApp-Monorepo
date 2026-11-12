@@ -167,7 +167,15 @@ export type ApiKey = {
   revoked_at: string | null;
 };
 
-export type WebhookEndpoint = { url: string; active: boolean; signing_secret: string; updated_at: string };
+export type WebhookEndpoint = {
+  url: string;
+  active: boolean;
+  /** e.g. kinko_whsec_…abcd */
+  masked_secret: string;
+  /** Only in the response that creates the endpoint or rotates the secret. */
+  signing_secret?: string;
+  updated_at: string;
+};
 
 export type WebhookDeliveryRow = {
   id: string;
