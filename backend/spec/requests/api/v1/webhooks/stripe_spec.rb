@@ -30,6 +30,7 @@ RSpec.describe "Api::V1::Webhooks::Stripe", type: :request do
     entry = account.ledger_entries.sole
     expect(entry.amount_cents).to eq(25_00)
     expect(entry.description).to eq("Deposit from Card Payment")
+    expect(system_account.ledger_entries.sole).to have_attributes(entry_type: "debit", amount_cents: entry.amount_cents)
     expect(entry.reference).to eq("pi_123")
   end
 

@@ -29,9 +29,12 @@ module Accounts
       )
     end
 
-    def debit!(money, transaction_id: nil, description: nil, reference: nil)
+    # allow_negative: only for an account that stands for money outside Kinko
+    # (the system account, see Payments::DepositService). A customer's
+    # account can never go below zero.
+    def debit!(money, transaction_id: nil, description: nil, reference: nil, allow_negative: false)
       validate_amount!(money)
-      raise InsufficientFunds if insufficient?(money)
+      raise InsufficientFunds if !allow_negative && insufficient?(money)
 
       register_entry(
         amount_cents: money.amount_cents,

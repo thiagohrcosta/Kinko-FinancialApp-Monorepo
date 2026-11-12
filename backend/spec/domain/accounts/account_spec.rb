@@ -129,6 +129,18 @@ RSpec.describe Accounts::Account do
   end
 
   describe "#debit!" do
+    context "with allow_negative (the system account)" do
+      it "can take the balance below zero" do
+        account.debit!(money_100, allow_negative: true)
+
+        expect(account.balance).to eq(-100_00)
+      end
+
+      it "still rejects invalid amounts" do
+        expect { account.debit!(money_zero, allow_negative: true) }.to raise_error(Accounts::InvalidAmount)
+      end
+    end
+
     context "with sufficient balance" do
       before { account.credit!(money_200) }
 

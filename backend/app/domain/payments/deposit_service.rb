@@ -10,10 +10,16 @@ module Payments
     # Kinko ledger currency; the domain raises CurrencyMismatch otherwise.
     def call(account_uuid:, amount_cents:, reference: nil, currency: Accounts::Money::DEFAULT_CURRENCY)
       money = Accounts::Money.new(amount_cents, currency.to_s.upcase)
+      transaction_id = SecureRandom.uuid
 
+      # Double entry: the user is credited and the system account, which stands
+      # for money coming from outside Kinko (card payments), is debited by the
+      # same amount. Its balance is therefore minus everything ever deposited.
       @account_repository.with_locked(account_uuid, SYSTEM_ACCOUNT_UUID) do |user_account, system_account|
-        user_account.credit!(money, description: "Deposit from Card Payment", reference: reference)
-        system_account.credit!(money, description: "Card Payment Processed", reference: reference)
+        user_account.credit!(money, transaction_id: transaction_id, description: "Deposit from Card Payment",
+                                    reference: reference)
+        system_account.debit!(money, transaction_id: transaction_id, description: "Card Payment Processed",
+                                     reference: reference, allow_negative: true)
       end
 
       # Only notify once the deposit is committed (callers may wrap this
